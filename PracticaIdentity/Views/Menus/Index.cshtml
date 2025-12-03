@@ -1,0 +1,208 @@
+﻿@model IEnumerable<CapaData.Entities.Menu>
+@using Microsoft.AspNetCore.Identity
+@{
+    ViewData["Title"] = "Mantenimiento de Menús";
+    var roles = ViewBag.Roles as List<IdentityRole>; // viene del controlador
+}
+
+<h2>Mantenimiento de Menús</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Tabla Menus</h5>
+
+                <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#modalCrear">
+                    <i class="fa fa-plus"></i> Crear Menú
+                </button>
+
+            </div>
+            <div id="card-body-titular" class="card-body collapse show">
+                <table id="tablaMenus" class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Descripción</th>
+                            <th>Padre</th>
+                            <th>Ruta</th>
+                            <th>Roles</th>
+                            <th>Ícono</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var menu in Model)
+                        {
+                            var padre = Model.FirstOrDefault(m => m.Id == menu.IdPadre);
+                            <tr>
+                                <td>@menu.DescripcionMenu</td>
+                                <td>@(padre != null ? padre.DescripcionMenu : "-")</td>
+                                <td>@menu.Attach</td>
+                                <td>@menu.RolesUsers</td>
+                                <td><i class="@menu.Iconos"></i> @menu.Iconos</td>
+                                <td>
+                                    <button class="btn btn-warning btn-sm"
+                                            data-toggle="modal"
+                                            data-target="#modalEditar"
+                                            data-id="@menu.Id"
+                                            data-descripcion="@menu.DescripcionMenu"
+                                            data-padre="@menu.IdPadre"
+                                            data-attach="@menu.Attach"
+                                            data-roles="@menu.RolesUsers"
+                                            data-iconos="@menu.Iconos">
+                                        <i class="fa fa-pencil"></i> Editar
+                                    </button>
+
+
+                                    <form asp-action="Delete" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@menu.Id" />
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro que deseas eliminar este menú?')">
+                                            <i class="fa fa-trash"></i> Eliminar
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear -->
+<div class="modal fade" id="modalCrear" tabindex="-1">
+    <div class="modal-dialog">
+        <form asp-action="Create" method="post">
+            <div class="modal-content">
+                <div class="modal-header"><h5>Crear Menú</h5></div>
+                <div class="modal-body">
+                    <input type="text" name="DescripcionMenu" class="form-control mb-2" placeholder="Descripción" />
+
+                    <!-- Dropdown para elegir padre -->
+                    <select name="IdPadre" class="form-control mb-2">
+                        <option value="">-- Sin padre (menú raíz) --</option>
+                        @foreach (var padre in Model.Where(m => m.IdPadre == null))
+                        {
+                            <option value="@padre.Id">@padre.DescripcionMenu</option>
+                        }
+                    </select>
+
+                    <input type="text" name="Attach" class="form-control mb-2" placeholder="Ruta (/Controller/Action)" />
+
+                    <!-- Dropdown de roles (múltiple) -->
+                    <label class="small text-muted">Roles permitidos</label>
+                    <select name="RolesUsers" class="form-control mb-2" multiple>
+                        @if (roles != null)
+                        {
+                            @foreach (var rol in roles)
+                            {
+                                <option value="@rol.Name">@rol.Name</option>
+                            }
+                        }
+                        else
+                        {
+                            <option disabled>No hay roles disponibles</option>
+                        }
+                    </select>
+
+                    <input type="text" name="Iconos" class="form-control mb-2" placeholder="Clase de ícono (ej: fa fa-cogs)" />
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Editar -->
+<div class="modal fade" id="modalEditar" tabindex="-1">
+    <div class="modal-dialog">
+        <form asp-action="Edit" method="post">
+            <div class="modal-content">
+                <div class="modal-header"><h5>Editar Menú</h5></div>
+                <div class="modal-body">
+                    <input type="hidden" id="editId" name="Id" />
+                    <input type="text" id="editDescripcion" name="DescripcionMenu" class="form-control mb-2" />
+
+                    <!-- Dropdown para elegir padre -->
+                    <select id="editPadre" name="IdPadre" class="form-control mb-2">
+                        <option value="">-- Sin padre (menú raíz) --</option>
+                        @foreach (var padre in Model.Where(m => m.IdPadre == null))
+                        {
+                            <option value="@padre.Id">@padre.DescripcionMenu</option>
+                        }
+                    </select>
+
+                    <input type="text" id="editAttach" name="Attach" class="form-control mb-2" />
+
+                    <!-- Dropdown de roles (múltiple) -->
+                    <label class="small text-muted">Roles permitidos</label>
+                    <select id="editRoles" name="RolesUsers" class="form-control mb-2" multiple>
+                        @if (roles != null)
+                        {
+                            @foreach (var rol in roles)
+                            {
+                                <option value="@rol.Name">@rol.Name</option>
+                            }
+                        }
+                        else
+                        {
+                            <option disabled>No hay roles disponibles</option>
+                        }
+                    </select>
+
+                    <input type="text" id="editIconos" name="Iconos" class="form-control mb-2" />
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#tablaMenus').DataTable({
+                responsive: true,
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }
+            });
+
+            $('#modalEditar').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+
+                $('#editId').val(button.data('id'));
+                $('#editDescripcion').val(button.data('descripcion'));
+                $('#editAttach').val(button.data('attach'));
+                $('#editIconos').val(button.data('iconos'));
+
+                var padreId = button.data('padre');
+                $('#editPadre').val(padreId);
+
+                var rolesCsv = button.data('roles'); // "Admin,User"
+                $('#editRoles option').prop('selected', false);
+                if (rolesCsv) {
+                    rolesCsv.split(',').forEach(function (r) {
+                        var roleName = r.trim();
+                        $('#editRoles option[value="' + roleName + '"]').prop('selected', true);
+                    });
+                }
+            });
+        });
+    </script>
+}
+

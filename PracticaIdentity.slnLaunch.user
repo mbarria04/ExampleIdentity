@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "Nuevo perfil",
+    "Projects": [
+      {
+        "Path": "PracticaIdentity\\PracticaIdentity.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "ApisJWT\\ApisJWT.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

@@ -1,0 +1,213 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore;
+@using CapaData.Entities;
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>@ViewData["Title"] - MENU</title>
+	<!-- Bootstrap -->
+	<link href="~/vendors/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+	<!-- Font Awesome -->
+	<link href="~/vendors/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+	<!-- NProgress -->
+	<link href="~/vendors/nprogress/nprogress.css" rel="stylesheet">
+	<!-- iCheck -->
+	<link href="~/vendors/iCheck/skins/flat/green.css" rel="stylesheet">
+	<!-- bootstrap-wysiwyg -->
+	<link href="~/vendors/google-code-prettify/src/prettify.css" rel="stylesheet">
+	<!-- Select2 -->
+	<link href="~/vendors/select2/dist/css/select2.min.css" rel="stylesheet">
+	<!-- Switchery -->
+	<link href="~/vendors/switchery/dist/switchery.min.css" rel="stylesheet">
+	<!-- starrr -->
+	<link href="~/vendors/starrr/dist/starrr.css" rel="stylesheet">
+	<!-- bootstrap-daterangepicker -->
+	<link href="~/vendors/bootstrap-daterangepicker/daterangepicker.css" rel="stylesheet">
+	<!-- bootstrap-datetimepicker -->
+	<link href="~/vendors/bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.css" rel="stylesheet">
+
+	<!-- Datatables -->
+	<link href="~/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css" rel="stylesheet">
+	<link href="~/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css" rel="stylesheet">
+	<link href="~/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css" rel="stylesheet">
+	<link href="~/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css" rel="stylesheet">
+	<link href="~/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css" rel="stylesheet">
+	<link href="~/vendors/datatables.net-select/css/select.bootstrap.min.css" rel="stylesheet">
+
+	<!-- Custom Theme Style -->
+	<link href="~/build/css/custom.min.css" rel="stylesheet">
+
+	<!-- jQuery -->
+	<script src="~/vendors/jquery/dist/jquery.min.js"></script>
+</head>
+<body class="nav-md">
+	@{
+		string fullName = null;
+
+		if (User.Identity != null)
+		{
+
+
+			var currentUser = await UserManager.GetUserAsync(User);
+
+			if (currentUser != null)
+			{
+
+				fullName = currentUser.NombreCompleto;
+			}
+			else
+			{
+				// Mostrar un mensaje al usuario indicando que no se encontró su información
+				var mensajeError = "No se pudo encontrar tu información de usuario. Intenta iniciar sesión nuevamente.";
+				Console.WriteLine(mensajeError);
+			}
+		}
+	}
+	<div class="container body">
+		<div class="main_container">
+			<div class="col-md-3 left_col">
+				<div class="left_col scroll-view">
+					<div class="navbar nav_title" style="border: 0;">
+						<a href="@Url.Action("Inscripcion", "Solicitudes")" class="site_title"><i class="fa fa-certificate"></i> <span>MENU</span></a>
+					</div>
+
+					<div class="clearfix"></div>
+
+
+
+					<br />
+
+					<div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+						@await Component.InvokeAsync("Menu")
+					</div>
+
+				</div>
+			</div>
+
+
+			<div class="top_nav">
+				<div class="nav_menu">
+					<div class="nav toggle">
+						<a id="menu_toggle"><i class="fa fa-bars"></i></a>
+					</div>
+					<nav class="nav navbar-nav">
+						<ul class=" navbar-right">
+							<li class="nav-item dropdown open" style="padding-left: 15px;">
+								<a href="javascript:;" class="user-profile dropdown-toggle" aria-haspopup="true" id="navbarDropdown" data-toggle="dropdown" aria-expanded="false">
+									@* Si el usuario está autenticado, mostrar su nombre; si no, mostrar "Iniciar sesión" *@
+									@if (SignInManager.IsSignedIn(User))
+									{
+										@(string.IsNullOrEmpty(fullName) ? User.Identity?.Name : fullName)
+									}
+									else
+									{
+										<span>Iniciar sesión</span>
+									}
+								</a>
+								<div class="dropdown-menu dropdown-usermenu pull-right" aria-labelledby="navbarDropdown">
+									@if (SignInManager.IsSignedIn(User))
+									{
+										<!-- Mostrar opción de Perfil y Cerrar sesión solo si el usuario está autenticado -->
+										<a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">
+											<span>Perfil</span>
+										</a>
+										<form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+											<button type="submit" class="dropdown-item" data-toggle="tooltip" data-placement="top" title="Cerrar Sesión">
+												<i class="fa fa-sign-out pull-right"></i> Cerrar Sesión
+											</button>
+										</form>
+									}
+									else
+									{
+										<!-- Mostrar enlaces solo si el usuario no está autenticado -->
+										<a class="dropdown-item" href="@Url.Page("/Account/Login", new { area = "Identity" })">
+											<span>Iniciar sesión</span>
+										</a>
+										<a class="dropdown-item" href="@Url.Page("/Account/Register", new { area = "Identity" })">
+											<span>Registrarse</span>
+										</a>
+									}
+								</div>
+							</li>
+
+
+						</ul>
+					</nav>
+				</div>
+			</div>
+			<!-- /top navigation -->
+			<!-- page content -->
+			<div class="right_col" role="main">
+				@RenderBody()
+			</div>
+			<!-- /page content -->
+			<!-- footer content -->
+			<footer>
+				<div class="pull-right">
+
+				</div>
+				<div class="clearfix"></div>
+			</footer>
+			<!-- /footer content -->
+		</div>
+	</div>
+	<!-- Bootstrap -->
+	<script src="~/vendors/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+	<!-- FastClick -->
+	<script src="~/vendors/fastclick/lib/fastclick.js"></script>
+	<!-- NProgress -->
+	<script src="~/vendors/nprogress/nprogress.js"></script>
+	<!-- bootstrap-progressbar -->
+	<script src="~/vendors/bootstrap-progressbar/bootstrap-progressbar.min.js"></script>
+	<!-- iCheck -->
+	<script src="~/vendors/iCheck/icheck.min.js"></script>
+	<!-- bootstrap-daterangepicker -->
+	<script src="~/vendors/moment/min/moment.min.js"></script>
+	<script src="~/vendors/bootstrap-daterangepicker/daterangepicker.js"></script>
+	<!-- bootstrap-datetimepicker -->
+	<script src="~/vendors/bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"></script>
+	<!-- bootstrap-wysiwyg -->
+	<script src="~/vendors/bootstrap-wysiwyg/js/bootstrap-wysiwyg.min.js"></script>
+	<script src="~/vendors/jquery.hotkeys/jquery.hotkeys.js"></script>
+	<script src="~/vendors/google-code-prettify/src/prettify.js"></script>
+	<!-- jQuery Tags Input -->
+	<script src="~/vendors/jquery.tagsinput/src/jquery.tagsinput.js"></script>
+	<!-- Switchery -->
+	<script src="~/vendors/switchery/dist/switchery.min.js"></script>
+	<!-- Parsley -->
+	<script src="~/vendors/parsleyjs/dist/parsley.min.js"></script>
+	<!-- Autosize -->
+	<script src="~/vendors/autosize/dist/autosize.min.js"></script>
+	<!-- jQuery autocomplete -->
+	<script src="~/vendors/devbridge-autocomplete/dist/jquery.autocomplete.min.js"></script>
+	<!-- starrr -->
+	<script src="~/vendors/starrr/dist/starrr.js"></script>
+	<!-- Datatables -->
+	<script src="~/vendors/datatables.net/js/jquery.dataTables.min.js"></script>
+	<script src="~/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+	<script src="~/vendors/datatables.net-buttons/js/dataTables.buttons.min.js"></script>
+	<script src="~/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js"></script>
+	<script src="~/vendors/datatables.net-buttons/js/buttons.flash.min.js"></script>
+	<script src="~/vendors/datatables.net-buttons/js/buttons.html5.min.js"></script>
+	<script src="~/vendors/datatables.net-buttons/js/buttons.print.min.js"></script>
+	<script src="~/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js"></script>
+	<script src="~/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js"></script>
+	<script src="~/vendors/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+	<script src="~/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js"></script>
+	<script src="~/vendors/datatables.net-scroller/js/dataTables.scroller.min.js"></script>
+	<script src="~/vendors/datatables.net-select/js/dataTables.select.min.js"></script>
+	<script src="~/vendors/jszip/dist/jszip.min.js"></script>
+	<script src="~/vendors/pdfmake/build/pdfmake.min.js"></script>
+	<script src="~/vendors/pdfmake/build/vfs_fonts.js"></script>
+	<!-- Custom Theme Scripts -->
+	<script src="~/build/js/custom.js"></script>
+	<script src="~/js/site.js"></script>
+	@await RenderSectionAsync("Scripts", required: false)
+	@await RenderSectionAsync("Styles", required: false)
+</body>
+</html>

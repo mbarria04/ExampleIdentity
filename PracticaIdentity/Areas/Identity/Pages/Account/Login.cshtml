@@ -1,0 +1,171 @@
+﻿@page
+@model LoginModel
+
+@{
+    Layout = null;
+    ViewData["Title"] = "Iniciar sesión";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"]</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0 20px; /* espacio a los bordes del body */
+        }
+
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Imagen pegada al login-box, sin borde ni sombra */
+        .login-image {
+            width: 505px;
+            height: 495px;
+            background: url('/images/login.webp') no-repeat center center;
+            background-size: cover;
+            border-top-left-radius: 12px; /* solo borde superior izquierdo */
+            border-bottom-left-radius: 12px; /* solo borde inferior izquierdo */
+            border-top-right-radius: 0; /* lado pegado al form recto */
+            border-bottom-right-radius: 0; /* lado pegado al form recto */
+        }
+
+        .login-form {
+            width: 400px;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            border-top-left-radius: 0; /* lado pegado a la imagen recto */
+            border-bottom-left-radius: 0; /* lado pegado a la imagen recto */
+            border-top-right-radius: 12px; /* solo borde superior derecho */
+            border-bottom-right-radius: 12px; /* solo borde inferior derecho */
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.8s ease-in-out;
+            margin-left: -4px; /* pega la imagen al login sin espacio */
+        }
+
+        .login-form h2 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+
+        .form-control {
+            font-size: 13px;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .btn-primary {
+            font-size: 14px;
+            padding: 12px;
+            border-radius: 8px;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #0056b3, #004085);
+        }
+
+        .links a {
+            font-size: 12px;
+            text-decoration: none;
+            color: #0d6efd;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .login-container {
+                flex-direction: column;
+            }
+
+            .login-image {
+                width: 80%;
+                height: 200px;
+                margin-bottom: 15px;
+            }
+
+            .login-form {
+                width: 100%;
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+
+        <div class="login-image"></div>
+        <div class="login-form">
+           
+            <h2>Bienvenido</h2>
+            <form id="account" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.Email" class="form-label">Correo electrónico</label>
+                    <input asp-for="Input.Email" class="form-control" autocomplete="username" placeholder="usuario@correo.com" />
+                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.Password" class="form-label">Contraseña</label>
+                    <input asp-for="Input.Password" class="form-control" autocomplete="current-password" placeholder="********" />
+                    <span asp-validation-for="Input.Password" class="text-danger"></span>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" asp-for="Input.RememberMe" />
+                    <label class="form-check-label" asp-for="Input.RememberMe">
+                        @Html.DisplayNameFor(m => m.Input.RememberMe)
+                    </label>
+                </div>
+
+                <button id="login-submit" type="submit" class="btn btn-primary w-100">Iniciar sesión</button>
+
+                <div class="links mt-3 text-center">
+                    <p><a id="forgot-password" asp-page="./ForgotPassword">¿Olvidaste tu contraseña?</a></p>
+                    <p><a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Registrarse</a></p>
+                    <p><a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Reenviar confirmación</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+</body>
+</html>

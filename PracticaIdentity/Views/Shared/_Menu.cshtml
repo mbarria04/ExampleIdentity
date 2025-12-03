@@ -1,0 +1,40 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using CapaData.Entities;
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+
+    var validarApelacion = 0;
+}
+
+
+@if (User.IsInRole("Admin"))
+{
+    <div class="menu_section">
+        <ul class="nav side-menu">
+            <li>
+                <a><i class="fa fa-cogs"></i> Administración <span class="fa fa-chevron-down"></span></a>
+                <ul class="nav child_menu">
+                    <li><a href="@Url.Action("Index", "Roles")">Roles del Sistema</a></li>
+                    <li><a href="@Url.Action("Index", "UserRoles")">Roles de Usuario</a></li>  <!-- Asegúrate de que el controlador y la acción sean correctos -->
+                    <li><a href="@Url.Action("Index", "DropDown")">Moises DropDown</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+}
+
+@if (User.IsInRole("UserMax"))
+{
+    <div class="menu_section">
+        <ul class="nav side-menu">
+            <li>
+                <a><i class="fa fa-cogs"></i> Reporteria <span class="fa fa-chevron-down"></span></a>
+                <ul class="nav child_menu">
+                    <li><a href="@Url.Action("Index", "Reportes")">Reportes</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+}

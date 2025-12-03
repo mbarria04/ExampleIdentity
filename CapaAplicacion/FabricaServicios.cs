@@ -1,0 +1,37 @@
+﻿using Autofac;
+using CapaAplicacion.Interfaces;
+using CapaAplicacion.Servicios;
+using CapaData.Interfaces;
+using CapaData.Repositorios;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace CapaAplicacion
+{
+    public static class FabricaServicios
+    {
+        public static void RegisterServices(ContainerBuilder builder, IConfiguration configuration)
+        {
+
+            builder.RegisterType<MenuRepositorio>().As<IMenuRepositorio>().InstancePerLifetimeScope();
+
+
+
+
+            builder.RegisterType<MenuServices>()
+                   .As<IMenuServices>()
+                   .InstancePerLifetimeScope();
+
+            builder.RegisterType<Dependencias>()
+                   .AsSelf()
+                   .InstancePerLifetimeScope();
+
+
+
+        }
+    }
+}

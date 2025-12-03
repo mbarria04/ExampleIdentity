@@ -1,0 +1,116 @@
+﻿@model IEnumerable<CapaData.Entities.UserRolesViewModel>
+@{
+    ViewData["Title"] = "Usuarios y Roles";
+}
+
+
+
+
+<div class="row">
+    <div class="col-md-12">
+        s
+        <div class="card">
+
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Mantenimiento de Usuarios </h5>
+
+
+
+            </div>
+            <div id="card-body-titular" class="card-body collapse show">
+
+                <table id="tablaUsuarios" class="table table-bordered table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Roles</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            <tr>
+                                <td>@user.UserName</td>
+                                <td>@string.Join(", ", user.Roles)</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm btnGestionRoles"
+                                            data-toggle="modal"
+                                            data-target="#modalRoles"
+                                            data-userid="@user.UserId"
+                                            data-username="@user.UserName">
+                                        <i class="fa fa-pencil"></i> Asignar Rol
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal con dropdown -->
+<div class="modal fade" id="modalRoles" tabindex="-1">
+    <div class="modal-dialog">
+        <form asp-action="Manage" method="post">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Asignar Rol</h5>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="userId" name="UserId" />
+                    <h6 id="userName"></h6>
+
+                    <!-- Dropdown de roles -->
+                    <div class="form-group">
+                        <label for="roleDropdown">Seleccionar Rol</label>
+                        <select id="roleDropdown" name="RoleId" class="form-control">
+                            <!-- Se llenará dinámicamente vía AJAX -->
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Inicializar DataTable
+            $('#tablaUsuarios').DataTable({
+                responsive: true,
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }
+            });
+
+            // Cargar roles en el modal
+            $('#modalRoles').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var userId = button.data('userid');
+                var userName = button.data('username');
+
+                $('#userId').val(userId);
+                $('#userName').text("Usuario: " + userName);
+
+                // AJAX para traer roles disponibles y llenar el dropdown
+                $.get('/UserRoles/GetRolesDropdown?userId=' + userId, function (data) {
+                    $('#roleDropdown').empty();
+                    $.each(data, function (i, role) {
+                        $('#roleDropdown').append(
+                            $('<option>', {
+                                value: role.id,
+                                text: role.name,
+                                selected: role.isSelected
+                            })
+                        );
+                    });
+                });
+            });
+        });
+    </script>
+}

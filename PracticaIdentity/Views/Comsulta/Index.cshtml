@@ -1,0 +1,91 @@
+﻿@{
+    ViewData["Title"] = "Consultas Menús";
+
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+          
+            <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Tabla Menus</h5>
+                    <button id="btnConsultar" class="btn btn-primary">Consultar</button>
+
+
+            </div>
+            <div id="card-body-titular" class="card-body collapse show">
+                <table id="tablaMenus" class="display">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Descripción</th>
+                            <th>Id Padre</th>
+                            <th>Attach</th>
+                            <th>Roles Users</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+@section Scripts {
+   
+
+
+    <script>
+        $(document).ready(function () {
+            $('#tablaMenus').DataTable({
+                columns: [
+                    { data: 'id' },
+                    { data: 'descripcionMenu' },
+                    { data: 'idPadre' },
+                    { data: 'attach' },
+                    { data: 'rolesUsers' }
+                    ],
+                initComplete: function () {
+                    // Aplica estilo pequeño al combo y al buscador
+                    $('.dataTables_length select').addClass('form-control form-control-sm');
+                    $('.dataTables_filter input').addClass('form-control form-control-sm');
+                  }
+
+            });
+
+            $("#btnConsultar").click(function () {
+                // 1. Pedir token a App1
+                       $.ajax({
+            url: "https://localhost:7183/api/JWT/generate", // 🔑 URL completa del API que genera el JWT
+            type: "GET",
+            success: function (response) {
+                var token = response.token;
+
+                // 2. Usar token para llamar a App2
+                $.ajax({
+                    url: "https://localhost:7096/api/reportes/menus",
+                    type: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    },
+                    success: function (data) {
+                        var table = $('#tablaMenus').DataTable();
+                        table.clear().rows.add(data).draw();
+                    },
+                    error: function (xhr) {
+                        alert("Error: " + xhr.status + " - " + xhr.responseText);
+                    }
+                });
+            },
+            error: function () {
+                alert("No se pudo generar el token");
+            }
+        });
+
+            });
+        });
+    </script>
+}

@@ -1,0 +1,65 @@
+﻿@model List<CapaData.Entities.VM_MenuItems>
+@using Microsoft.AspNetCore.Identity
+@using CapaData.Entities;
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+
+
+
+<div class="menu_section">
+    <ul class="nav side-menu">
+        @foreach (var item in Model)
+        {
+            if (item.Hijos.Any())
+            {
+                <li>
+                    <a><i class="@item.Iconos"></i> @item.DescripcionMenu <span class="fa fa-chevron-down"></span></a>
+                    <ul class="nav child_menu" id="submenu-@item.Id">
+                        @foreach (var hijo in item.Hijos)
+                        {
+                            <li class="nav-item">
+                                <a href="@hijo.Attach">@hijo.DescripcionMenu</a>
+                            </li>
+                        }
+                    </ul>
+                </li>
+            }
+            else
+            {
+                <li>
+                    <a href="@item.Attach"><i class="@item.Iconos"></i>@item.DescripcionMenu</a>
+                </li>
+            }
+        }
+    </ul>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var collapses = document.querySelectorAll('ul.collapse');
+
+        collapses.forEach(function (collapseEl) {
+            collapseEl.addEventListener('show.bs.collapse', function () {
+                var toggleIcon = this.previousElementSibling.querySelector('.toggle-icon');
+                if (toggleIcon) {
+                    toggleIcon.classList.remove('fa-chevron-down');
+                    toggleIcon.classList.add('fa-chevron-up');
+                }
+            });
+
+            collapseEl.addEventListener('hide.bs.collapse', function () {
+                var toggleIcon = this.previousElementSibling.querySelector('.toggle-icon');
+                if (toggleIcon) {
+                    toggleIcon.classList.remove('fa-chevron-up');
+                    toggleIcon.classList.add('fa-chevron-down');
+                }
+            });
+        });
+    });
+
+    
+
+
+
+</script>
