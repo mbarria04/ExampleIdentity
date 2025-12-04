@@ -4,6 +4,7 @@ using CapaAplicacion;
 using CapaAplicacion.Interfaces;
 using CapaAplicacion.Servicios;
 using CapaData.Data;
+using CapaData.DTOs;
 using CapaData.Entities;
 using CapaData.Interfaces;
 using CapaData.Repositorios;
@@ -60,7 +61,16 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Identity/Account/AccessDenied";  // Ruta correcta para acceso denegado
 });
 
-
+builder.Services.AddTransient<IExtendedEmailSender, EmailSender>(i =>
+    new EmailSender(
+        builder.Configuration["EmailSender:Host"],
+        builder.Configuration.GetValue<int>("EmailSender:Port"),
+        builder.Configuration.GetValue<bool>("EmailSender:EnableSSL"),
+        builder.Configuration.GetValue<bool>("EmailSender:UseDefaultCredentials"),
+        builder.Configuration["EmailSender:UserName"],
+        builder.Configuration["EmailSender:Password"]
+    )
+);
 
 
 
