@@ -18,13 +18,17 @@ namespace CapaAplicacion
         {
 
             builder.RegisterType<MenuRepositorio>().As<IMenuRepositorio>().InstancePerLifetimeScope();
-
+            builder.RegisterType<ClienteRepositorio>().As<ICLienteRepositorio>().InstancePerLifetimeScope();
 
 
 
             builder.RegisterType<MenuServices>()
                    .As<IMenuServices>()
                    .InstancePerLifetimeScope();
+
+            builder.RegisterType<Cliente>()
+                  .As<ICliente>()
+                  .InstancePerLifetimeScope();
 
             builder.RegisterType<Dependencias>()
                    .AsSelf()

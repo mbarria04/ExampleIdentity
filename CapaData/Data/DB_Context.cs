@@ -41,6 +41,11 @@ namespace CapaData.Data
                       .HasForeignKey(e => e.IdPadre)
                       .OnDelete(DeleteBehavior.Restrict); // importante para evitar cascadas
 
+                entity.Property(e => e.Iconos)
+                      .HasMaxLength(200)
+                      .IsRequired(false);
+
+
                 entity.HasData(
                     new Menu { Id = 1, DescripcionMenu = "Administracion", IdPadre = null, Attach = "" },
                     new Menu { Id = 2, DescripcionMenu = "Roles", IdPadre = 1, Attach = "Roles/Index" },

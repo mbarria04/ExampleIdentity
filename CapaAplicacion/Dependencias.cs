@@ -10,14 +10,18 @@ using System.Threading.Tasks;
 namespace CapaAplicacion
 {
     using CapaAplicacion.Interfaces;
+    using CapaData.Interfaces;
 
     public class Dependencias
     {
         public IMenuServices MenuServices { get; }
 
-        public Dependencias(IMenuServices menuServices)
+        public ICliente _Cliente { get; }
+
+        public Dependencias(IMenuServices menuServices, ICliente cliente )
         {
             MenuServices = menuServices;
+            _Cliente = cliente;
         }
     }
 

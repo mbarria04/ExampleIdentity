@@ -28,13 +28,13 @@ public class MenuViewComponent : ViewComponent
 
         var rolesUsuario = await _userManager.GetRolesAsync(usuario);
 
-        //OJO SOLO SE HABILITA PARA EL PRIMER INICIO DE SESION Y SE DEBE ASIGANAR EL ROL 
-        //if (rolesUsuario == null || !rolesUsuario.Any())
-        //{
-        //    rolesUsuario = new List<string> { "ADMIN" };
-        //    // O simplemente permitir ver los menús sin restricción
-        //    //rolesUsuario = new List<string>();
-        //}
+        ////OJO SOLO SE HABILITA PARA EL PRIMER INICIO DE SESION Y SE DEBE ASIGANAR EL ROL
+        if (rolesUsuario == null || !rolesUsuario.Any())
+        {
+            rolesUsuario = new List<string> { "ADMIN" };
+            // O simplemente permitir ver los menús sin restricción
+            //rolesUsuario = new List<string>();
+        }
 
 
 

@@ -79,7 +79,7 @@ builder.Services.AddRazorPages();
 
 // Agregar servicios de MVC (si estás usando controladores MVC también)
 builder.Services.AddControllersWithViews();
-
+builder.Services.AddHttpClient();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
