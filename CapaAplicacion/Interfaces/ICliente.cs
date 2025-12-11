@@ -10,5 +10,7 @@ namespace CapaAplicacion.Interfaces
     public interface ICliente
     {
         Task<bool> AgregarClienteAsync(ClienteDto cliente);
+        Task<ClienteDto> ObtenerClientePorIdAsync(int id);
+        Task<bool> ActualizarClienteAsync(ClienteDto cliente);
     }
 }

@@ -42,6 +42,38 @@ namespace CapaData.Repositorios
             return resultado;
         }
 
+        public async Task<bool> ActualizarClienteAsync(ClienteDto cliente)
+        {
+            using var connection = new SqlConnection(_context.Database.GetDbConnection().ConnectionString);
+
+            var parametros = new DynamicParameters();
+            parametros.Add("@Id", cliente.Id);
+            parametros.Add("@Nombre", cliente.Nombre);
+            parametros.Add("@Apellido", cliente.Apellido);
+            parametros.Add("@Email", cliente.Email);
+            parametros.Add("@Telefono", cliente.Telefono);
+            parametros.Add("@FechaRegistro", cliente.FechaRegistro);
+            parametros.Add("@Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+
+            await connection.ExecuteAsync("sp_EditarCliente", parametros, commandType: CommandType.StoredProcedure);
+
+            return parametros.Get<bool>("@Resultado");
+        }
+
+        public async Task<ClienteDto> ObtenerClientePorIdAsync(int id)
+        {
+            using var connection = new SqlConnection(_context.Database.GetDbConnection().ConnectionString);
+
+            var parametros = new DynamicParameters();
+            parametros.Add("@Id", id);
+
+            return await connection.QueryFirstOrDefaultAsync<ClienteDto>(
+                "sp_ObtenerClientePorId",
+                parametros,
+                commandType: CommandType.StoredProcedure
+            );
+        }
+
         //public async Task<bool> InsertarClienteAsync(ClienteDto clienteDto)
         //{
         //    // Mapear DTO a entidad

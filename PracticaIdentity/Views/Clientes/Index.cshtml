@@ -1,4 +1,8 @@
-﻿<div class="card">
+﻿@{
+    ViewData["Title"] = "Clientes";
+}
+
+<div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">Clientes</h5>
         <input type="text" id="txtCedula" class="form-control w-25" placeholder="Ingrese cédula" />
@@ -7,18 +11,18 @@
         <button class="btn btn-success mb-3" data-toggle="modal" data-target="#modalAgregarCliente">
             Agregar Cliente
         </button>
-
-
-
     </div>
     <div class="card-body">
-        <table id="tablaClientes" class="display">
+        <table id="tablaClientes" class="display" style="width:100%">
             <thead>
                 <tr>
                     <th>Id</th>
                     <th>Nombre</th>
+                    <th>Apellido</th>
                     <th>Email</th>
-                    <th>Teléfono</th>
+                    <th>Telefono</th>
+                    <th>Fecha Registro</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -26,19 +30,19 @@
     </div>
 </div>
 
-<!-- Modal -->
-<!-- Modal -->
+<!-- Modal Agregar / Editar Cliente -->
 <div class="modal fade" id="modalAgregarCliente" tabindex="-1" role="dialog" aria-labelledby="modalAgregarClienteLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="modalAgregarClienteLabel">Agrsegar Cliente</h5>
+                <h5 class="modal-title" id="modalAgregarClienteLabel">Agregar Cliente</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <form id="formAgregarCliente">
+                    <input type="hidden" id="IdCliente" />
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label for="Nombre">Nombre</label>
@@ -74,23 +78,38 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
+
+            // ================= DataTable =================
             var table = $('#tablaClientes').DataTable({
                 ajax: {
-                     url: "/Clientes/ObtenerClientes", // tu acción corregida
-                     type: "GET",
-                     dataSrc: "" // porque devuelve un array JSON directamente
-                      },
+                    url: "/Clientes/ObtenerClientes",
+                    type: "GET",
+                    dataSrc: ""
+                },
                 columns: [
                     { data: 'id' },
                     { data: 'nombre' },
+                    { data: 'apellido' },
                     { data: 'email' },
-                    { data: 'telefono' }
+                    { data: 'telefono' },
+                    {
+                        data: 'fechaRegistro',
+                        render: function (data) {
+                            return new Date(data).toLocaleDateString("es-PA");
+                        }
+                    },
+                    {
+                        data: null,
+                        render: function (data) {
+                            return `<button class="btn btn-warning btn-sm btnEditar" data-id="${data.id}">Editar</button>`;
+                        }
+                    }
                 ]
             });
 
+            // ================ Consultar por cédula ================
             $("#btnConsultar").click(function () {
                 var cedula = $("#txtCedula").val();
-
                 $.ajax({
                     url: "/Clientes/Consultar",
                     type: "GET",
@@ -103,36 +122,71 @@
                     }
                 });
             });
-        });
 
+            $(document).on('click', '.btnEditar', function () {
+             var id = $(this).data('id');
 
+              $.ajax({
+                url: "/Clientes/ObtenerPorId",
+                type: "GET",
+                data: { id: id },
+                success: function (cliente) {
+                    $("#IdCliente").val(cliente.id);
+                    $("#Nombre").val(cliente.nombre);
+                    $("#Apellido").val(cliente.apellido);
+                    $("#Email").val(cliente.email);
+                    $("#Telefono").val(cliente.telefono);
+                    $("#FechaRegistro").val(cliente.fechaRegistro.split('T')[0]);
 
-         $("#btnGuardarCliente").click(function () {
-            var cliente = {
-                Nombre: $("#Nombre").val(),
-                Apellido: $("#Apellido").val(),
-                Email: $("#Email").val(),
-                Telefono: $("#Telefono").val(),
-                FechaRegistro: $("#FechaRegistro").val()
-            };
+                    $("#modalAgregarClienteLabel").text("Editar Cliente");
+                    $("#modalAgregarCliente").modal("show");
+                     },
+                   error: function (xhr) {
+                       alert("Error al obtener el cliente: " + xhr.status + " - " + xhr.responseText);
+                   }
+               });
+             });
 
-            $.ajax({
-                url: "/Clientes/Agregar",
-                type: "POST",
-                contentType: "application/json",
-                data: JSON.stringify(cliente),
-                success: function (response) {
-                    alert("Cliente agregado correctamente");
-                    $("#modalAgregarCliente").modal('hide');
-                    // refrescar tabla si quieres
-                },
-                error: function (xhr) {
-                    alert("Error: " + xhr.status + " - " + xhr.responseText);
-                }
+            // ================== Guardar Cliente (Agregar o Editar) ==================
+            $("#btnGuardarCliente").click(function () {
+                var cliente = {
+                    Id: $("#IdCliente").val(),
+                    Nombre: $("#Nombre").val(),
+                    Apellido: $("#Apellido").val(),
+                    Email: $("#Email").val(),
+                    Telefono: $("#Telefono").val(),
+                    FechaRegistro: $("#FechaRegistro").val()
+                };
+
+                var url = cliente.Id ? "/Clientes/Editar" : "/Clientes/Agregar";
+                var type = cliente.Id ? "PUT" : "POST";
+
+                $.ajax({
+                    url: url,
+                    type: type,
+                    contentType: "application/json",
+                    data: JSON.stringify(cliente),
+                    success: function () {
+                        $("#modalAgregarCliente").modal("hide");
+                        $("#formAgregarCliente")[0].reset();
+                        $("#IdCliente").val("");
+                        $("#modalAgregarClienteLabel").text("Agregar Cliente");
+                        table.ajax.reload(null, false);
+                        alert("Cliente guardado correctamente");
+                    },
+                    error: function (xhr) {
+                        alert("Error: " + xhr.status + " - " + xhr.responseText);
+                    }
+                });
             });
+
+            // ================== Limpiar modal al abrir para agregar ==================
+            $('[data-target="#modalAgregarCliente"]').click(function () {
+                $("#formAgregarCliente")[0].reset();
+                $("#IdCliente").val("");
+                $("#modalAgregarClienteLabel").text("Agregar Cliente");
+            });
+
         });
-
-
-
     </script>
 }

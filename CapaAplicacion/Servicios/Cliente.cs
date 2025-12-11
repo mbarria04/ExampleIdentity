@@ -1,6 +1,7 @@
 ﻿using CapaAplicacion.Interfaces;
 using CapaData.DTOs;
 using CapaData.Interfaces;
+using CapaData.Repositorios;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +25,19 @@ namespace CapaAplicacion.Servicios
         {
             if (cliente == null) throw new ArgumentNullException(nameof(cliente));
             return await _cLienteRepositorio.InsertarClienteAsync(cliente);
+        }
+
+        public async Task<bool> ActualizarClienteAsync(ClienteDto cliente)
+        {
+            if (cliente == null)
+                throw new ArgumentNullException(nameof(cliente));
+
+            return await _cLienteRepositorio.ActualizarClienteAsync(cliente);
+        }
+
+        public async Task<ClienteDto> ObtenerClientePorIdAsync(int id)
+        {
+            return await _cLienteRepositorio.ObtenerClientePorIdAsync(id);
         }
 
     }

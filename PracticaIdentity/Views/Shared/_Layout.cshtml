@@ -211,11 +211,160 @@
 	@await RenderSectionAsync("Styles", required: false)
 
 
-	<div style="position:fixed; bottom:20px; right:20px; width:400px; height:500px; z-index:9999;">
+	@* <div style="position:fixed; bottom:20px; right:20px; width:400px; height:500px; z-index:1000;">
 		<iframe src="https://localhost:58266"
-				style="width:100%; height:100%; border:0; border-radius:8px;"
+				style="width:100%; height:100%; border:0; border-radius:8px; pointer-events:none;"
 				allow="cross-origin-isolated"></iframe>
+	</div> *@
+
+	<!-- ===== Marca / botón flotante ===== -->
+	<button id="chatLauncher"
+			class="chat-launcher"
+			aria-controls="chatPanel"
+			aria-expanded="false"
+			title="Abrir chat">
+		💬
+	</button>
+
+	<!-- ===== Panel del chat con iframe a TU API ===== -->
+	<div id="chatPanel" class="chat-panel" hidden>
+		<div class="chat-panel-header">
+			<span>Asistente</span>
+			<button id="chatClose" class="chat-close" aria-label="Cerrar">✖</button>
+		</div>
+
+		<div class="chat-frame-wrap">
+			<iframe id="chatFrame"
+					class="chat-frame"
+					src="https://localhost:58266/"
+					title="Asistente">
+			</iframe>
+		</div>
 	</div>
+
+	<style>
+		/* ===== Botón flotante ===== */
+		.chat-launcher {
+			position: fixed;
+			right: 20px;
+			bottom: 20px;
+			width: 60px;
+			height: 60px;
+			border: none;
+			border-radius: 50%;
+			background: #007bff;
+			color: #fff;
+			font-size: 26px;
+			cursor: pointer;
+			box-shadow: 0 6px 16px rgba(0,0,0,.20);
+			z-index: 1000; /* encima del contenido, debajo de modals */
+		}
+
+		/* ===== Panel del chat ===== */
+		.chat-panel {
+			position: fixed;
+			right: 20px;
+			bottom: 90px; /* deja espacio para el botón */
+			width: 400px;
+			height: 500px;
+			background: #fff;
+			border-radius: 10px;
+			box-shadow: 0 12px 28px rgba(0,0,0,.18);
+			overflow: hidden;
+			z-index: 1000;
+			display: flex;
+			flex-direction: column;
+			/* animación */
+			opacity: 0;
+			transform: translateY(10px);
+			transition: opacity .18s ease, transform .18s ease;
+		}
+
+			.chat-panel.is-open {
+				opacity: 1;
+				transform: none;
+			}
+
+		.chat-panel-header {
+			background: #007bff;
+			color: #fff;
+			padding: 10px 12px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+
+		.chat-close {
+			background: transparent;
+			border: none;
+			color: #fff;
+			font-size: 18px;
+			cursor: pointer;
+		}
+
+		.chat-frame-wrap {
+			flex: 1;
+			overflow: hidden;
+		}
+
+		.chat-frame {
+			display: block;
+			width: 100%;
+			height: 100%;
+			border: 0;
+			pointer-events: none; /* no captura clics hasta abrirse */
+		}
+
+		/* ===== Responsivo ===== */
+		@@media (max-width: 768px) {
+			.chat-panel
+
+		{
+			width: 92vw;
+			height: 70vh;
+			right: 4vw;
+			bottom: 84px;
+		}
+
+		}
+	</style>
+
+	<script>
+		(function () {
+			const launcher = document.getElementById('chatLauncher');
+			const panel    = document.getElementById('chatPanel');
+			const closeBtn = document.getElementById('chatClose');
+			const frame    = document.getElementById('chatFrame');
+
+			function openChat() {
+				panel.hidden = false;
+				void panel.offsetWidth; // reflow para transición
+				panel.classList.add('is-open');
+				launcher.style.display = 'none';
+				launcher.setAttribute('aria-expanded', 'true');
+				frame.style.pointerEvents = 'auto';
+			}
+
+			function closeChat() {
+				panel.classList.remove('is-open');
+				setTimeout(() => { panel.hidden = true; }, 180);
+				launcher.style.display = 'block';
+				launcher.setAttribute('aria-expanded', 'false');
+				frame.style.pointerEvents = 'none';
+			}
+
+			launcher.addEventListener('click', openChat);
+			closeBtn.addEventListener('click', closeChat);
+
+			document.addEventListener('keydown', (e) => {
+				if (e.key === 'Escape' && !panel.hidden) {
+					closeChat();
+				}
+			});
+		})();
+	</script>
+
+
 
 
 

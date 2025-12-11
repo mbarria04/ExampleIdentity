@@ -22,26 +22,30 @@ namespace ApisJWT.Controllers
         }
 
         [HttpGet("generate")]
-        [AllowAnonymous] // Permite acceso sin autenticación previa
+        [AllowAnonymous]
         public IActionResult GenerateToken()
         {
-            // Puedes dejarlo sin claims o poner un claim genérico
-            var claims = new[]
-            {
-        new Claim(ClaimTypes.Name, "ApiWeb2Client")
-    };
+            var token = GenerarToken();
+            return Ok(new { token });
+        }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+        // 👉 Método que genera realmente el token
+        private string GenerarToken()
+        {
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(_config["Jwt:Key"])
+            );
+
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(30), // duración del token
-                signingCredentials: creds);
+                expires: DateTime.Now.AddMinutes(30),
+                signingCredentials: creds
+            );
 
-            return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
     }
