@@ -19,7 +19,8 @@ namespace CapaAplicacion
 
             builder.RegisterType<MenuRepositorio>().As<IMenuRepositorio>().InstancePerLifetimeScope();
             builder.RegisterType<ClienteRepositorio>().As<ICLienteRepositorio>().InstancePerLifetimeScope();
-
+            builder.RegisterType<ProductoRepositorio>().As<IProductoRepositorio>().InstancePerLifetimeScope();
+            builder.RegisterType<PromotionRepositorio>().As<IPromotionRepositorio>().InstancePerLifetimeScope();
 
 
             builder.RegisterType<MenuServices>()
@@ -29,6 +30,16 @@ namespace CapaAplicacion
             builder.RegisterType<Cliente>()
                   .As<ICliente>()
                   .InstancePerLifetimeScope();
+
+            builder.RegisterType<ProductoServices>()
+                  .As<IProducto>()
+                  .InstancePerLifetimeScope();
+
+            builder.RegisterType<PromocionServices>()
+                  .As<Ipromocion>()
+                  .InstancePerLifetimeScope();
+
+
 
             builder.RegisterType<Dependencias>()
                    .AsSelf()

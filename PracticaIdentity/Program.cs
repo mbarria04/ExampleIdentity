@@ -11,6 +11,8 @@ using CapaData.Repositorios;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using PriceRecalculationMvc_VS2022.Services;
+using PriceRecalculationMvc_VS2022.Services.Background;
 using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
@@ -87,6 +89,13 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
+builder.Services.AddSingleton<IJobsQueue, JobsQueue>();
+builder.Services.AddSingleton<IJobsStore, JobsStore>();
+builder.Services.AddScoped<IPriceCalculator, PriceCalculator>();
+
+builder.Services.AddHostedService<PriceRecalculationConsumer>();
+builder.Services.AddHostedService<NightlyScheduler>();
 
 var app = builder.Build();
 

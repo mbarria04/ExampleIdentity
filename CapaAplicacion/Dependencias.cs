@@ -18,10 +18,16 @@ namespace CapaAplicacion
 
         public ICliente _Cliente { get; }
 
-        public Dependencias(IMenuServices menuServices, ICliente cliente )
+        public IProducto ProductoServices { get; }
+
+        public Ipromocion PromocionServices { get; }
+
+        public Dependencias(IMenuServices menuServices, ICliente cliente, IProducto producto, Ipromocion promocion )
         {
             MenuServices = menuServices;
             _Cliente = cliente;
+            ProductoServices = producto;
+            PromocionServices = promocion;
         }
     }
 

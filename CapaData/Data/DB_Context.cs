@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CapaData.Entities;
 
+
 namespace CapaData.Data
 {
     public partial class DB_Context : DbContext
@@ -15,6 +16,8 @@ namespace CapaData.Data
         }
 
         public DbSet<Menu> Menus { get; set; }
+        public DbSet<Product> Products => Set<Product>();
+        public DbSet<Promotion> Promotions => Set<Promotion>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -54,7 +57,23 @@ namespace CapaData.Data
                        );
             });
 
+            modelBuilder.Entity<Product>(e =>
+            {
+                e.HasKey(p => p.Id);
+                e.Property(p => p.Sku).IsRequired().HasMaxLength(40);
+                e.Property(p => p.Name).IsRequired().HasMaxLength(200);
+                e.Property(p => p.BasePrice).HasColumnType("decimal(18,2)");
+                e.Property(p => p.CurrentPrice).HasColumnType("decimal(18,2)");
+                e.HasIndex(p => p.Sku).IsUnique();
+            });
 
+            modelBuilder.Entity<Promotion>(e =>
+            {
+                e.HasKey(p => p.Id);
+                e.Property(p => p.ProductSku).IsRequired().HasMaxLength(40);
+                e.Property(p => p.DiscountPercent).HasColumnType("decimal(9,4)");
+                e.HasIndex(p => new { p.ProductSku, p.StartUtc, p.EndUtc });
+            });
 
             base.OnModelCreating(modelBuilder);
         }
