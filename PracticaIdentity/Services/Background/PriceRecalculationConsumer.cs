@@ -1,16 +1,6 @@
-
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using CapaData.Data;
+﻿using CapaData.Data;
 using CapaData.Models;
 using PriceRecalculationMvc_VS2022.Services;
-
-namespace PriceRecalculationMvc_VS2022.Services.Background;
 
 public class PriceRecalculationConsumer : BackgroundService
 {
@@ -37,6 +27,7 @@ public class PriceRecalculationConsumer : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var semaphore = new SemaphoreSlim(_maxConcurrency);
+
         await foreach (var job in _queue.ReadAllAsync(stoppingToken))
         {
             await semaphore.WaitAsync(stoppingToken);
@@ -44,26 +35,35 @@ public class PriceRecalculationConsumer : BackgroundService
         }
     }
 
-    private async Task ProcessJobAsync(PriceJob job, SemaphoreSlim semaphore, CancellationToken ct)
+    private async Task ProcessJobAsync(
+    PriceJob job,
+    SemaphoreSlim semaphore,
+    CancellationToken ct)
     {
         try
         {
             _store.ChangeState(job.Id, JobState.Processing);
+
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<DB_Context>();
             var calculator = scope.ServiceProvider.GetRequiredService<IPriceCalculator>();
 
-            await using var tx = await db.Database.BeginTransactionAsync(ct);
-            var result = await ExecuteWithRetriesAsync(() => calculator.RecalculateAsync(db, ct), ct, 3);
-            await tx.CommitAsync(ct);
+
+
+            var result = await calculator.RecalculateAsync(db, job.Id, job.StoredProc, ct);
 
             _store.ChangeState(job.Id, JobState.Completed);
-            _logger.LogInformation("Job {Id} completado. Productos: {Updated}, Promos: {Promos}", job.Id, result.ProductsUpdated, result.PromotionsApplied);
+
+            _logger.LogInformation(
+                "Job {Id} completado. Productos: {Updated}, Promos: {Promos}",
+                job.Id,
+                result.ProductsUpdated,
+                result.PromotionsApplied
+            );
         }
-        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        catch (OperationCanceledException)
         {
-            _logger.LogInformation("Job {Id} cancelado por apagado.", job.Id);
-            _store.ChangeState(job.Id, JobState.Error, "Cancelado por apagado.");
+            _store.ChangeState(job.Id, JobState.Error, "Cancelado");
         }
         catch (Exception ex)
         {
@@ -76,14 +76,4 @@ public class PriceRecalculationConsumer : BackgroundService
         }
     }
 
-    private static async Task<T> ExecuteWithRetriesAsync<T>(Func<Task<T>> action, CancellationToken ct, int maxAttempts)
-    {
-        int attempt = 0; var delay = TimeSpan.FromSeconds(1);
-        while (true)
-        {
-            try { return await action(); }
-            catch (Exception) when (attempt < maxAttempts)
-            { attempt++; await Task.Delay(delay, ct); delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, 30)); }
-        }
-    }
 }

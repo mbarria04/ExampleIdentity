@@ -90,12 +90,20 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+
+// Cola
 builder.Services.AddSingleton<IJobsQueue, JobsQueue>();
-builder.Services.AddSingleton<IJobsStore, JobsStore>();
+
+// Store: Scoped (no Singleton)
+builder.Services.AddScoped<IJobsStore, JobsStore>();
+
+// Calculator
 builder.Services.AddScoped<IPriceCalculator, PriceCalculator>();
 
+// Hosted Services
 builder.Services.AddHostedService<PriceRecalculationConsumer>();
 builder.Services.AddHostedService<NightlyScheduler>();
+
 
 var app = builder.Build();
 

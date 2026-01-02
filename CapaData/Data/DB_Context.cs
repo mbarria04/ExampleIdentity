@@ -18,6 +18,7 @@ namespace CapaData.Data
         public DbSet<Menu> Menus { get; set; }
         public DbSet<Product> Products => Set<Product>();
         public DbSet<Promotion> Promotions => Set<Promotion>();
+        public DbSet<JobEntity> Jobs { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -74,6 +75,32 @@ namespace CapaData.Data
                 e.Property(p => p.DiscountPercent).HasColumnType("decimal(9,4)");
                 e.HasIndex(p => new { p.ProductSku, p.StartUtc, p.EndUtc });
             });
+
+
+            var e = modelBuilder.Entity<JobEntity>();
+            e.ToTable("Jobs");
+            e.HasKey(x => x.Id);
+
+            e.Property(x => x.Created)
+             .HasColumnType("datetimeoffset(7)")
+             .IsRequired();
+
+            e.Property(x => x.Reason)
+             .HasMaxLength(100)
+             .IsRequired();
+
+            e.Property(x => x.State)
+             .HasMaxLength(20)
+             .IsRequired();
+
+            e.Property(x => x.Error)
+             .HasMaxLength(4000);
+
+
+            e.Property(j => j.TaskName).HasMaxLength(100).IsRequired();
+            e.Property(j => j.StoredProc).HasMaxLength(128).IsRequired();
+
+
 
             base.OnModelCreating(modelBuilder);
         }
