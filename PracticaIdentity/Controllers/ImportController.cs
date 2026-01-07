@@ -1,17 +1,17 @@
-﻿using CapaData.Data;
+﻿using CapaAplicacion;
+using CapaData.Data;
+using CapaData.DTOs;
+using CapaData.Entities;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
-
+using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using ClosedXML.Excel;
-using CapaData.Entities;
-using CapaAplicacion;
 
 namespace PracticaIdentity.Controllers
 {
@@ -22,7 +22,7 @@ namespace PracticaIdentity.Controllers
         private readonly Dependencias _dependencias;
 
         public ImportController(DB_Context db, ILogger<ImportController> logger, Dependencias dependencias)
-        { 
+        {
             _db = db;
             _logger = logger;
             _dependencias = dependencias;
@@ -37,7 +37,7 @@ namespace PracticaIdentity.Controllers
             var ordered = products.OrderBy(p => p.Sku).ToList();
             return View(ordered);
 
-     
+
         }
 
         [HttpPost]
@@ -90,7 +90,7 @@ namespace PracticaIdentity.Controllers
                         created++; ok++;
                     }
                     else
-                    {
+                     {
                         product.Name = name;
                         product.BasePrice = basePrice;
                         product.CurrentPrice = basePrice; // al importar, iguala el actual al base
@@ -108,8 +108,19 @@ namespace PracticaIdentity.Controllers
                 TempData["Error"] = $"Error procesando Excel: {ex.Message}";
             }
 
-            var products = await _db.Products.OrderBy(p => p.Sku).ToListAsync();
-            return View(products);
+            var products = await _db.Products
+                     .OrderBy(p => p.Sku)
+                     .Select(p => new TblProducto
+                     {
+                                   Id = p.Id,
+                                  Sku = p.Sku,
+                                 Name = p.Name,
+                            BasePrice = p.BasePrice,
+                         CurrentPrice = p.CurrentPrice
+                     })
+                        .ToListAsync();
+
+               return View(products);
         }
 
     }

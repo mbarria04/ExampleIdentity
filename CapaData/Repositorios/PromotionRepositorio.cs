@@ -96,5 +96,29 @@ namespace CapaData.Repositorios
 
             return (items, total);
         }
-    }
+
+
+
+        public Task<int> MarcarCompletadoAsync(Guid jobId, CancellationToken ct)
+        {
+            return _db.Database.ExecuteSqlInterpolatedAsync($@"
+                UPDATE dbo.Jobs
+                   SET State = {"Completed"},
+                       Error = {(string?)null}
+                 WHERE Id = {jobId}
+                   AND State = {"Processing"}", ct);
+        }
+
+        public Task<int> MarcarFallidoAsync(Guid jobId, string error, CancellationToken ct)
+        {
+            return _db.Database.ExecuteSqlInterpolatedAsync($@"
+                UPDATE dbo.Jobs
+                   SET State = {"Failed"},
+                       Error = {error}
+                 WHERE Id = {jobId}", ct);
+        }
+    
+
+
+     }
 }

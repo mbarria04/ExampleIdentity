@@ -11,6 +11,7 @@ using CapaData.Repositorios;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using PracticaIdentity.Services;
 using PriceRecalculationMvc_VS2022.Services;
 using PriceRecalculationMvc_VS2022.Services.Background;
 using System.Net;
@@ -103,6 +104,8 @@ builder.Services.AddScoped<IPriceCalculator, PriceCalculator>();
 // Hosted Services
 builder.Services.AddHostedService<PriceRecalculationConsumer>();
 builder.Services.AddHostedService<NightlyScheduler>();
+
+builder.Services.AddScoped<ActiveDirectoryService>();
 
 
 var app = builder.Build();

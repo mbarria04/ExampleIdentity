@@ -30,6 +30,8 @@ namespace CapaData.Interfaces
             int pageSize,
             CancellationToken ct = default
         );
+        Task<int> MarcarCompletadoAsync(Guid jobId, CancellationToken ct);
+        Task<int> MarcarFallidoAsync(Guid jobId, string error, CancellationToken ct);
 
     }
 }

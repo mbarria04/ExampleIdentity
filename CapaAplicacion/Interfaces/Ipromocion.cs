@@ -17,5 +17,17 @@ namespace CapaAplicacion.Interfaces
         Task AgregarAsync(TblPromocion dto, CancellationToken ct = default);
         Task ActualizarAsync(TblPromocion dto, CancellationToken ct = default);
         Task EliminarAsync(int id, CancellationToken ct = default);
+
+        Task<JobUpdateResult> MarcarJobCompletadoAsync(
+            Guid jobId,
+            CancellationToken ct);
+
+        Task<JobUpdateResult> MarcarJobFallidoAsync(
+            Guid jobId,
+            string error,
+            CancellationToken ct);
+
+
+
     }
 }

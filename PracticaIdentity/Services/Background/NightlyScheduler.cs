@@ -1,14 +1,15 @@
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
+using CapaAplicacion;
+using CapaData.Data;
+using CapaData.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
-using CapaData.Data;
-using CapaData.Models;
 using PriceRecalculationMvc_VS2022.Services;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace PriceRecalculationMvc_VS2022.Services.Background
 {
@@ -19,19 +20,20 @@ namespace PriceRecalculationMvc_VS2022.Services.Background
         private readonly IJobsStore _store;
         private readonly IDbContextFactory<DB_Context> _dbFactory;
         private readonly IPriceCalculator _calculator;
-
+        private readonly Dependencias _dependencias;
         public NightlyScheduler(
             ILogger<NightlyScheduler> logger,
             IConfiguration config,
             IJobsStore store,
             IDbContextFactory<DB_Context> dbFactory,
-            IPriceCalculator calculator)
+            IPriceCalculator calculator, Dependencias dependencias)
         {
             _logger = logger;
             _config = config;
             _store = store;
             _dbFactory = dbFactory;
             _calculator = calculator;
+            _dependencias = dependencias;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -132,49 +134,89 @@ namespace PriceRecalculationMvc_VS2022.Services.Background
         /// <summary>
         /// Ejecuta el cálculo de precios para un Job y actualiza estado Completed/Error.
         /// </summary>
+        /// 
 
-
-        private async Task ProcessSingleJobAsync(PriceJob job, CancellationToken ct)
+        private async Task ProcessSingleJobAsync(
+    PriceJob job,
+    CancellationToken ct)
         {
             try
             {
                 using var db = _dbFactory.CreateDbContext();
 
-                // Ejecuta SP con JobId y StoredProc guardado en Jobs
-                var result = await _calculator.RecalculateAsync(db, job.Id, job.StoredProc, ct);
+                var calcResult = await _calculator.RecalculateAsync(
+                    db,
+                    job.Id,
+                    job.StoredProc,
+                    ct);
 
-                // Estado final en BD: Completed y Error NULL
-                await db.Database.ExecuteSqlInterpolatedAsync($@"
-            UPDATE dbo.Jobs
-               SET State = {"Completed"}, Error = {(string?)null}
-             WHERE Id = {job.Id} AND State = {"Processing"}", ct);
+                var update = await _dependencias.PromocionServices
+                    .MarcarJobCompletadoAsync(job.Id, ct);
 
-                _logger.LogInformation(
-                    "Job {Id} COMPLETADO. Productos: {Updated}, Promos: {Promos}",
-                    job.Id, result.ProductsUpdated, result.PromotionsApplied);
+                if (!update.Success)
+                {
+                    _logger.LogWarning(
+                        "Job {JobId} ejecutado pero no se pudo marcar como completado",
+                        job.Id);
+                }
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
-                using var db = _dbFactory.CreateDbContext();
-                await db.Database.ExecuteSqlInterpolatedAsync($@"
-            UPDATE dbo.Jobs
-               SET State = {"Failed"}, Error = {"Cancelado por detención"}
-             WHERE Id = {job.Id}", ct);
-
-                _logger.LogWarning("Job {Id} cancelado por detención.", job.Id);
+                await _dependencias.PromocionServices.MarcarJobFallidoAsync(
+                    job.Id,
+                    "Cancelado por detención del servicio",
+                    ct);
             }
             catch (Exception ex)
             {
-                using var db = _dbFactory.CreateDbContext();
-                await db.Database.ExecuteSqlInterpolatedAsync($@"
-            UPDATE dbo.Jobs
-               SET State = {"Failed"}, Error = {ex.Message}
-             WHERE Id = {job.Id}", ct);
-
-                _logger.LogError(ex, "Job {Id} FALLÓ durante ejecución de SP {Proc}.", job.Id, job.StoredProc);
+                await _dependencias.PromocionServices.MarcarJobFallidoAsync(
+                    job.Id,
+                    ex.Message,
+                    ct);
             }
+
+
+            //private async Task ProcessSingleJobAsync(PriceJob job, CancellationToken ct)
+            //{
+            //    try
+            //    {
+            //        using var db = _dbFactory.CreateDbContext();
+
+            //        // Ejecuta SP con JobId y StoredProc guardado en Jobs
+            //        var result = await _calculator.RecalculateAsync(db, job.Id, job.StoredProc, ct);
+
+            //        // Estado final en BD: Completed y Error NULL
+            //        await db.Database.ExecuteSqlInterpolatedAsync($@"
+            //    UPDATE dbo.Jobs
+            //       SET State = {"Completed"}, Error = {(string?)null}
+            //     WHERE Id = {job.Id} AND State = {"Processing"}", ct);
+
+            //        _logger.LogInformation(
+            //            "Job {Id} COMPLETADO. Productos: {Updated}, Promos: {Promos}",
+            //            job.Id, result.ProductsUpdated, result.PromotionsApplied);
+            //    }
+            //    catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            //    {
+            //        using var db = _dbFactory.CreateDbContext();
+            //        await db.Database.ExecuteSqlInterpolatedAsync($@"
+            //    UPDATE dbo.Jobs
+            //       SET State = {"Failed"}, Error = {"Cancelado por detención"}
+            //     WHERE Id = {job.Id}", ct);
+
+            //        _logger.LogWarning("Job {Id} cancelado por detención.", job.Id);
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        using var db = _dbFactory.CreateDbContext();
+            //        await db.Database.ExecuteSqlInterpolatedAsync($@"
+            //    UPDATE dbo.Jobs
+            //       SET State = {"Failed"}, Error = {ex.Message}
+            //     WHERE Id = {job.Id}", ct);
+
+            //        _logger.LogError(ex, "Job {Id} FALLÓ durante ejecución de SP {Proc}.", job.Id, job.StoredProc);
+            //    }
+            //}
+
         }
-
-
     }
 }

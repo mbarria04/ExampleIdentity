@@ -2,21 +2,25 @@
 using CapaData.DTOs;
 using CapaData.Entities;
 using CapaData.Interfaces;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static CapaAplicacion.Servicios.PromocionServices;
 
 namespace CapaAplicacion.Servicios
 {
     public class PromocionServices : Ipromocion
     {
         private readonly IPromotionRepositorio _repo;
+        private readonly ILogger<PromocionServices> _logger;
 
-        public PromocionServices(IPromotionRepositorio repo)
+        public PromocionServices(IPromotionRepositorio repo, ILogger<PromocionServices> logger)
         {
             _repo = repo;
+            _logger = logger;
         }
 
         public async Task<List<TblPromocion>> ObtenerTodosAsync(CancellationToken ct = default)
@@ -74,6 +78,62 @@ namespace CapaAplicacion.Servicios
         };
 
 
+        public async Task<JobUpdateResult> MarcarJobCompletadoAsync(
+          Guid jobId,
+          CancellationToken ct)
+        {
+            var rows = await _repo.MarcarCompletadoAsync(jobId, ct);
+
+            var result = new JobUpdateResult
+            {
+                Success = rows > 0,
+                RowsAffected = rows
+            };
+
+            if (result.Success)
+            {
+                _logger.LogInformation(
+                    "Job {JobId} marcado como COMPLETADO",
+                    jobId);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Job {JobId} NO fue actualizado (estado no era Processing)",
+                    jobId);
+            }
+
+            return result;
+        }
+
+        public async Task<JobUpdateResult> MarcarJobFallidoAsync(
+            Guid jobId,
+            string error,
+            CancellationToken ct)
+        {
+            var rows = await _repo.MarcarFallidoAsync(jobId, error, ct);
+
+            var result = new JobUpdateResult
+            {
+                Success = rows > 0,
+                RowsAffected = rows
+            };
+
+            _logger.LogError(
+                "Job {JobId} marcado como FALLIDO. Filas: {Rows}. Error: {Error}",
+                jobId,
+                rows,
+                error);
+
+            return result;
+        }
+
+
 
     }
+
+
+
+
+    
 }
