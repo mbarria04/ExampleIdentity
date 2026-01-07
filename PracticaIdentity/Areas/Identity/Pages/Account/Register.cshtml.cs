@@ -83,6 +83,11 @@ namespace PracticaIdentity.Areas.Identity.Pages.Account
 
 
             [Required]
+            [StringLength(100, ErrorMessage = "El Usuario debe tener un maximo de 12 caracteres.")]
+            public string UserName { get; set; }
+
+
+            [Required]
             [EmailAddress]
             [Display(Name = "Email")]
             public string Email { get; set; }
@@ -121,7 +126,7 @@ namespace PracticaIdentity.Areas.Identity.Pages.Account
 
             var user = new ApplicationUser
             {
-                UserName = Input.Email,
+                UserName = Input.UserName,
                 Email = Input.Email,
                 NombreCompleto = Input.NombreCompleto // Asignar el nombre completo
             };
