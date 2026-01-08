@@ -221,6 +221,8 @@ namespace PracticaIdentity.Areas.Identity.Pages.Account
                 Password = Input.Password
             };
 
+           
+
             if (!_activeAD.EsValido(adData, out string adError))
             {
                 ModelState.AddModelError(string.Empty, adError);
