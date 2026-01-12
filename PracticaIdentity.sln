@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CapaAplicacion", "CapaAplic
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CapaData", "CapaData\CapaData.csproj", "{57ED5B17-1EF8-4301-9706-543024A71DC0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApisJWT", "ApisJWT\ApisJWT.csproj", "{CDDD8E87-F42B-42B0-A7A6-BE08B769F5A2}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,10 +27,6 @@ Global
 		{57ED5B17-1EF8-4301-9706-543024A71DC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{57ED5B17-1EF8-4301-9706-543024A71DC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{57ED5B17-1EF8-4301-9706-543024A71DC0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CDDD8E87-F42B-42B0-A7A6-BE08B769F5A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CDDD8E87-F42B-42B0-A7A6-BE08B769F5A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CDDD8E87-F42B-42B0-A7A6-BE08B769F5A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CDDD8E87-F42B-42B0-A7A6-BE08B769F5A2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

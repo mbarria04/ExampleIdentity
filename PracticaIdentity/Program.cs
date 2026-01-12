@@ -1,3 +1,4 @@
+
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using CapaAplicacion;
@@ -16,54 +17,62 @@ using PriceRecalculationMvc_VS2022.Services;
 using PriceRecalculationMvc_VS2022.Services.Background;
 using System.Net;
 using System.Net.Mail;
-using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 var connectionString = builder.Configuration.GetConnectionString("IdentityConnection");
 
-// Configura el DbContext para ApplicationDbContext y agrega Identity
+// =====================================
+// DB CONTEXT + IDENTITY
+// =====================================
 builder.Services.AddDbContext<DB_ContextIdentity>(options =>
-    options.UseSqlServer(connectionString, sqlServerOptionsAction: sqlOptions =>
+    options.UseSqlServer(connectionString, sqlOptions =>
     {
         sqlOptions.EnableRetryOnFailure();
     }));
 
-// Configura la identidad (solo una vez)
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-    options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<DB_ContextIdentity>()
-    .AddDefaultUI()
-    .AddDefaultTokenProviders();
+{
+    options.SignIn.RequireConfirmedAccount = true;
+})
+.AddEntityFrameworkStores<DB_ContextIdentity>()
+.AddDefaultUI()
+.AddDefaultTokenProviders();
 
-
+// =====================================
+// DB CONTEXT DE NEGOCIO
+// =====================================
 builder.Services.AddDbContextFactory<DB_Context>(options =>
 {
-    options.UseSqlServer(connectionString, sqlServerOptionsAction: sqlOptions =>
+    options.UseSqlServer(connectionString, sqlOptions =>
     {
         sqlOptions.EnableRetryOnFailure();
         sqlOptions.CommandTimeout(180);
     });
 });
 
+// =====================================
+// AUTOFAC
+// =====================================
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 
-// Configuración de Autofac en el contenedor
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
     FabricaServicios.RegisterServices(containerBuilder, builder.Configuration);
 });
 
-
-
-
+// =====================================
+// COOKIES IDENTITY
+// =====================================
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Identity/Account/Login";  // Ruta correcta para el login
-    options.AccessDeniedPath = "/Identity/Account/AccessDenied";  // Ruta correcta para acceso denegado
+    options.LoginPath = "/Identity/Account/Login";
+    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
 });
 
+// =====================================
+// EMAIL
+// =====================================
 builder.Services.AddTransient<IExtendedEmailSender, EmailSender>(i =>
     new EmailSender(
         builder.Configuration["EmailSender:Host"],
@@ -75,48 +84,43 @@ builder.Services.AddTransient<IExtendedEmailSender, EmailSender>(i =>
     )
 );
 
-
-
-// Agregar Razor Pages para que funcione con Identity
+// =====================================
+// MVC + RAZOR + HTTP + SESSION
+// =====================================
 builder.Services.AddRazorPages();
-
-// Agregar servicios de MVC (si estás usando controladores MVC también)
 builder.Services.AddControllersWithViews();
-builder.Services.AddHttpClient();
+
+builder.Services.AddHttpClient(); // ✅ para consumir la API interna
+
+// Si usas sesiones, es buena práctica agregar cache distribuida (en memoria está ok para dev)
 builder.Services.AddDistributedMemoryCache();
+
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // tiempo de expiración de la sesión
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
 
-
-// Cola
+// =====================================
+// BACKGROUND / QUEUES
+// =====================================
 builder.Services.AddSingleton<IJobsQueue, JobsQueue>();
-
-// Store: Scoped (no Singleton)
 builder.Services.AddScoped<IJobsStore, JobsStore>();
-
-// Calculator
 builder.Services.AddScoped<IPriceCalculator, PriceCalculator>();
-
-// Hosted Services
 builder.Services.AddHostedService<PriceRecalculationConsumer>();
 builder.Services.AddHostedService<NightlyScheduler>();
 
+// =====================================
+// ACTIVE DIRECTORY
+// =====================================
 builder.Services.AddScoped<ActiveDirectoryService>();
-
 
 var app = builder.Build();
 
-
-app.UseSession(); // habilitar sesiones
-
-
-
-
-// Configuración del middleware
+// =====================================
+// MIDDLEWARE
+// =====================================
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -129,17 +133,18 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
 app.UseRouting();
 
-
+// Orden recomendado: Auth → Session → Authorization → Endpoints
 app.UseAuthentication();
+app.UseSession();        // ✅ habilita sesiones antes de usar los controladores que leen HttpContext.Session
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.MapRazorPages(); 
+app.MapRazorPages();
 
 app.Run();
-

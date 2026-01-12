@@ -1,11 +1,11 @@
-﻿using CapaAplicacion;
-using CapaData.DTOs; // 👈 aquí estaría tu ClienteDto en la capa Data
+﻿
+using CapaAplicacion;
+using CapaData.DTOs;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
-
+using System.Text.Json;
 
 namespace PracticaIdentity.Controllers
 {
@@ -14,105 +14,192 @@ namespace PracticaIdentity.Controllers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly Dependencias _dependencias;
         private readonly IConfiguration _config;
-        public ClientesController(IHttpClientFactory httpClientFactory, Dependencias dependencias, IConfiguration config)
+
+        public ClientesController(
+            IHttpClientFactory httpClientFactory,
+            Dependencias dependencias,
+            IConfiguration config)
         {
             _httpClientFactory = httpClientFactory;
             _dependencias = dependencias;
             _config = config;
         }
 
+        public IActionResult Index() => View();
 
-        public IActionResult Index()
+        /// <summary>
+        /// Crea HttpClient con token Bearer válido (solicita/renueva si es necesario).
+        /// </summary>
+        private async Task<HttpClient> CrearClienteConTokenAsync()
         {
-            return View();
-        }
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
 
+            var token = HttpContext.Session.GetString("JWT");
 
-        [HttpGet]
-        public async Task<IActionResult> ObtenerClientes(string cedula)
-        {
-            using var httpClient = _httpClientFactory.CreateClient();
+            // Si no hay token o está por expirar, obtenemos uno nuevo
+            if (string.IsNullOrEmpty(token) || DebeRenovar(token))
+            {
+                token = await ObtenerTokenAsync(client);
+                HttpContext.Session.SetString("JWT", token);
+            }
 
-            // 1. Pedir token a API1
-            var tokenResponse = await httpClient
-                .GetFromJsonAsync<Dictionary<string, string>>(
-                    "https://localhost:7183/api/jwt/generate"
-                );
-
-            var token = tokenResponse["token"];
-
-            // 2. Enviar token a API2
-            httpClient.DefaultRequestHeaders.Authorization =
+            client.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
 
-            // 3. Construir la URL de la API2
-            string url = string.IsNullOrEmpty(cedula)
-                ? "https://localhost:7096/api/clientes"
-                : $"https://localhost:7096/api/clientes/{cedula}";
+            return client;
+        }
 
-            // 4. Consumir API2
-            var clientes = await httpClient.GetFromJsonAsync<List<ClienteDto>>(url);
+        /// <summary>
+        /// Verifica si el JWT está por expirar (margen de 60 segundos).
+        /// </summary>
+        private bool DebeRenovar(string? token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+                return true;
 
-            return Json(clientes);
+            try
+            {
+                var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+                var expUtc = jwt.ValidTo; // hora en UTC
+                return expUtc <= DateTime.UtcNow.AddSeconds(60);
+            }
+            catch
+            {
+                // Si no se puede decodificar, forzamos renovación
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Pide token a la API interna con POST y API Key (X-API-KEY).
+        /// Espera JSON: { "token": "..." }
+        /// </summary>
+        private async Task<string> ObtenerTokenAsync(HttpClient client)
+        {
+            var baseUrl = _config["ApiClientes:BaseUrl"] ?? string.Empty;
+            var tokenPath = _config["ApiClientes:TokenEndpoint"] ?? string.Empty;
+            var apiKey = _config["ApiClientes:ApiKey"] ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(baseUrl) ||
+                string.IsNullOrWhiteSpace(tokenPath) ||
+                string.IsNullOrWhiteSpace(apiKey))
+            {
+                throw new InvalidOperationException("Configuración ApiClientes incompleta (BaseUrl, TokenEndpoint o ApiKey).");
+            }
+
+            var tokenUrl = CombineUrl(baseUrl, tokenPath);
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, tokenUrl);
+            request.Headers.Add("X-API-KEY", apiKey);
+
+            // Si tu endpoint no requiere body, igual enviamos "{}" para cumplir application/json
+            request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
+
+            using var response = await client.SendAsync(request);
+            var body = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException(
+                    $"No se pudo obtener el token. Status: {(int)response.StatusCode}. Respuesta: {body}");
+            }
+
+            using var doc = JsonDocument.Parse(body);
+            if (!doc.RootElement.TryGetProperty("token", out var tokenProp))
+            {
+                throw new InvalidOperationException("La respuesta del endpoint de token no contiene el campo 'token'.");
+            }
+
+            var token = tokenProp.GetString();
+            if (string.IsNullOrWhiteSpace(token))
+                throw new InvalidOperationException("El 'token' recibido está vacío.");
+
+            return token!;
+        }
+
+        /// <summary>
+        /// Helper para combinar baseUrl + path evitando dobles/ausencia de slash.
+        /// </summary>
+        private static string CombineUrl(string baseUrl, string path)
+        {
+            if (string.IsNullOrEmpty(baseUrl)) return path;
+            if (!baseUrl.EndsWith("/")) baseUrl += "/";
+            return baseUrl + path.TrimStart('/');
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerClientes()
+        {
+            try
+            {
+                var client = await CrearClienteConTokenAsync();
+
+                var baseUrl = _config["ApiClientes:BaseUrl"]!;
+                var clientesEP = _config["ApiClientes:ClientesEndpoint"]!;
+
+                // 👉 api/clientes/ObtenerClientes
+                var url = CombineUrl(baseUrl, $"{clientesEP}/ObtenerClientes");
+
+                var clientes = await client.GetFromJsonAsync<List<ClienteDto>>(url);
+
+                return Json(clientes ?? new List<ClienteDto>());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error al obtener clientes",
+                    detalle = ex.Message
+                });
+            }
         }
 
 
-
-       
-
-
-
-
-
-
-
-        // Acción que será llamada por Ajax desde la vista
         [HttpGet]
         public async Task<IActionResult> Consultar(string cedula)
         {
-            using var httpClient = _httpClientFactory.CreateClient();
+            try
+            {
+                var client = await CrearClienteConTokenAsync();
 
-            // 1. Pedir token al Identity Provider
-            var tokenResponse = await httpClient.PostAsync("https://localhost:5001/connect/token",
-                new FormUrlEncodedContent(new Dictionary<string, string>
+                var baseUrl = _config["ApiClientes:BaseUrl"]!;
+                var clientesEP = _config["ApiClientes:ClientesEndpoint"]!;
+
+                // 👉 api/clientes/ConsultarCliente?cedula=...
+                var url = CombineUrl(baseUrl, $"{clientesEP}/ConsultarCliente?cedula={cedula}");
+
+                var clientes = await client.GetFromJsonAsync<List<ClienteDto>>(url);
+
+                return Json(clientes ?? new List<ClienteDto>());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
                 {
-                    { "client_id", "app1-client" },
-                    { "client_secret", "superSecret" },
-                    { "grant_type", "client_credentials" },
-                    { "scope", "app2-api" }
-                }));
-
-            var tokenJson = await tokenResponse.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-            var token = tokenJson["access_token"];
-
-            // 2. Usar token para llamar a App2
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var clientes = await httpClient.GetFromJsonAsync<List<ClienteDto>>(
-                $"https://localhost:7096/api/clientes/{cedula}");
-
-            // Retorna JSON al Ajax
-            return Json(clientes);
+                    mensaje = "Error en consulta",
+                    detalle = ex.Message
+                });
+            }
         }
 
 
+        // 🔹 Agregar (lógica local, no llama API interna)
         [HttpPost]
         public async Task<IActionResult> Agregar([FromBody] ClienteDto cliente)
         {
-
             if (cliente == null)
                 return BadRequest(new { mensaje = "Cliente inválido" });
 
-            // Aquí llamas al servicio de cliente desde Dependencias
             var resultado = await _dependencias._Cliente.AgregarClienteAsync(cliente);
 
-            if (resultado)
-                return Ok(new { mensaje = "Cliente agregado correctamente" });
-            else
-                return StatusCode(500, new { mensaje = "Error al agregar el cliente" });
+            return resultado
+                ? Ok(new { mensaje = "Cliente agregado correctamente" })
+                : StatusCode(500, new { mensaje = "Error al agregar el cliente" });
         }
 
-
+        // 🔹 Editar (lógica local, no llama API interna)
         [HttpPut]
         public async Task<IActionResult> Editar([FromBody] ClienteDto cliente)
         {
@@ -123,13 +210,12 @@ namespace PracticaIdentity.Controllers
 
             var actualizado = await _dependencias._Cliente.ActualizarClienteAsync(cliente);
 
-            if (actualizado)
-                return Ok(new { mensaje = "Cliente actualizado correctamente" });
-            else
-                return StatusCode(500, new { mensaje = "Error al actualizar el cliente" });
+            return actualizado
+                ? Ok(new { mensaje = "Cliente actualizado correctamente" })
+                : StatusCode(500, new { mensaje = "Error al actualizar el cliente" });
         }
 
-
+        // 🔹 Obtener por id (lógica local)
         [HttpGet]
         public async Task<IActionResult> ObtenerPorId(int id)
         {
@@ -140,8 +226,5 @@ namespace PracticaIdentity.Controllers
 
             return Json(cliente);
         }
-
-
     }
-
- }
+}

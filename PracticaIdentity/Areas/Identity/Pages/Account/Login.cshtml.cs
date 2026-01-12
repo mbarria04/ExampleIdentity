@@ -113,50 +113,50 @@ namespace PracticaIdentity.Areas.Identity.Pages.Account
         }
 
         // Sin Active Directory
-        //public async Task<IActionResult> OnPostAsync(string returnUrl = null)
-        //{
-        //    returnUrl ??= Url.Content("~/");
+        public async Task<IActionResult> OnPostAsync(string returnUrl = null)
+        {
+            returnUrl ??= Url.Content("~/");
 
-        //    ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
-        //    if (ModelState.IsValid)
-        //    {
-        //        // This doesn't count login failures towards account lockout
-        //        // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-        //        var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
-        //        if (result.Succeeded)
-        //        {
-        //            _logger.LogInformation("User logged in.");
+            if (ModelState.IsValid)
+            {
+                // This doesn't count login failures towards account lockout
+                // To enable password failures to trigger account lockout, set lockoutOnFailure: true
+                var result = await _signInManager.PasswordSignInAsync(Input.UserName, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("User logged in.");
 
-        //            var AD = new DatosValidacionAD
-        //            {
-        //                UserID = Input.Email,
-        //                Password = Input.Password
-        //            };
+                    var AD = new DatosValidacionAD
+                    {
+                        UserID = Input.UserName,
+                        Password = Input.Password
+                    };
 
-        //            if(_activeAD.EsValido(AD,out string aderror))
+                    if (_activeAD.EsValido(AD, out string aderror))
 
 
-        //            return LocalRedirect(returnUrl);
-        //        }
-        //        if (result.RequiresTwoFactor)
-        //        {
-        //            return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
-        //        }
-        //        if (result.IsLockedOut)
-        //        {
-        //            _logger.LogWarning("User account locked out.");
-        //            return RedirectToPage("./Lockout");
-        //        }
-        //        else
-        //        {
-        //            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-        //            return Page();
-        //        }
-        //    }
+                        return LocalRedirect(returnUrl);
+                }
+                if (result.RequiresTwoFactor)
+                {
+                    return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
+                }
+                if (result.IsLockedOut)
+                {
+                    _logger.LogWarning("User account locked out.");
+                    return RedirectToPage("./Lockout");
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                    return Page();
+                }
+            }
 
-        //    return Page();
-        //}
+            return Page();
+        }
 
 
         //public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -205,47 +205,41 @@ namespace PracticaIdentity.Areas.Identity.Pages.Account
 
 
         // este metodo es con active directory 
-        public async Task<IActionResult> OnPostAsync(string returnUrl = null)
-        {
-            returnUrl ??= Url.Content("~/");
+        //public async Task<IActionResult> OnPostAsync(string returnUrl = null)
+        //{
+        //    returnUrl ??= Url.Content("~/");
 
-            //ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
-            //if (!ModelState.IsValid)
-            //    return Page();
+        //    var adData = new DatosValidacionAD
+        //    {
+        //        UserID = Input.UserName,       // o username según tu AD
+        //        Password = Input.Password
+        //    };
 
-            // 1️⃣ Validar contra Active Directory
-            var adData = new DatosValidacionAD
-            {
-                UserID = Input.UserName,       // o username según tu AD
-                Password = Input.Password
-            };
 
-           
 
-            if (!_activeAD.EsValido(adData, out string adError))
-            {
-                ModelState.AddModelError(string.Empty, adError);
-                return Page();
-            }
+        //    if (!_activeAD.EsValido(adData, out string adError))
+        //    {
+        //        ModelState.AddModelError(string.Empty, adError);
+        //        return Page();
+        //    }
 
-            // 2️⃣ Usuario válido en AD → buscar en Identity
-            //var user = await _signInManager.UserManager.FindByEmailAsync(Input.Email);
-            var user = await _signInManager.UserManager.FindByNameAsync(Input.UserName);
 
-            if (user == null)
-            {
-                ModelState.AddModelError(string.Empty, "Usuario no registrado en el sistema.");
-                return Page();
-            }
+        //    var user = await _signInManager.UserManager.FindByNameAsync(Input.UserName);
 
-            // 3️⃣ Login en Identity SIN validar password (ya lo validó AD)
-            await _signInManager.SignInAsync(user, Input.RememberMe);
+        //    if (user == null)
+        //    {
+        //        ModelState.AddModelError(string.Empty, "Usuario no registrado en el sistema.");
+        //        return Page();
+        //    }
 
-            _logger.LogInformation("Usuario autenticado vía Active Directory.");
 
-            return LocalRedirect(returnUrl);
-        }
+        //    await _signInManager.SignInAsync(user, Input.RememberMe);
+
+        //    _logger.LogInformation("Usuario autenticado vía Active Directory.");
+
+        //    return LocalRedirect(returnUrl);
+        //}
 
 
 
