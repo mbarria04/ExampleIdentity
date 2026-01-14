@@ -226,5 +226,22 @@ namespace PracticaIdentity.Controllers
 
             return Json(cliente);
         }
+
+
+        [HttpPost]
+        public IActionResult ValidarCampos([FromBody] ClienteDto cliente)
+        {
+            TryValidateModel(cliente);
+
+            var errores = ModelState
+                .Where(x => x.Value.Errors.Count > 0)
+                .ToDictionary(
+                    x => x.Key,
+                    x => x.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                );
+
+            return Ok(errores);
+        }
+
     }
 }

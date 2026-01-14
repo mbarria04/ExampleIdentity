@@ -6,41 +6,65 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using Dapper;
+using Microsoft.Extensions.Logging;
 
 namespace CapaData.Repositorios
 {
     public class ClienteRepositorio : ICLienteRepositorio
     {
         private readonly DB_Context _context;
-
-        public ClienteRepositorio(DB_Context context)
+        private readonly ILogger<ClienteRepositorio> _logger;
+        public ClienteRepositorio(DB_Context context, ILogger<ClienteRepositorio> logger)
         {
             _context = context;
+            _logger = logger;
         }
+
 
         public async Task<bool> InsertarClienteAsync(ClienteDto cliente)
         {
             var connectionString = _context.Database.GetDbConnection().ConnectionString;
 
-            using var connection = new SqlConnection(connectionString);
-            var parametros = new DynamicParameters();
+            await using var connection = new SqlConnection(connectionString);
+            await connection.OpenAsync(); // opcional, Dapper abre si hace falta
 
+            var parametros = new DynamicParameters();
             parametros.Add("@Nombre", cliente.Nombre);
             parametros.Add("@Apellido", cliente.Apellido);
             parametros.Add("@Email", cliente.Email);
             parametros.Add("@Telefono", cliente.Telefono);
             parametros.Add("@FechaRegistro", cliente.FechaRegistro);
 
-            // Aquí declaras el parámetro OUTPUT
+            // Si mantienes el patrón de OUTPUT:
             parametros.Add("@Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
 
-            await connection.ExecuteAsync("sp_AgregarCliente", parametros, commandType: CommandType.StoredProcedure);
+            try
+            {
+                // ¡Si el SP falla, Dapper lanzará excepción!
+                await connection.ExecuteAsync(
+                    "sp_AgregarCliente",
+                    parametros,
+                    commandType: CommandType.StoredProcedure,
+                    commandTimeout: 30);
 
-            // Recuperas el valor del parámetro OUTPUT
-            bool resultado = parametros.Get<bool>("@Resultado");
-
-            return resultado;
+                bool resultado = parametros.Get<bool>("@Resultado");
+                return resultado;
+            }
+            catch (SqlException ex)
+            {
+                // Loguea con el máximo contexto y RE-LANZA
+                _logger.LogError(ex,
+                    "Error SQL al insertar cliente. Nombre={Nombre}, Email={Email}",
+                    cliente.Nombre, cliente.Email);
+                throw; // ⬅️ importante para que el middleware lo capture
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inesperado al insertar cliente.");
+                throw; // ⬅️ deja que el middleware maneje
+            }
         }
+
 
         public async Task<bool> ActualizarClienteAsync(ClienteDto cliente)
         {

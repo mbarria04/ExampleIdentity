@@ -12,17 +12,27 @@ using CapaData.Repositorios;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using PracticaIdentity.Middlewares;
 using PracticaIdentity.Services;
 using PriceRecalculationMvc_VS2022.Services;
 using PriceRecalculationMvc_VS2022.Services.Background;
+using Serilog;
 using System.Net;
 using System.Net.Mail;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
+
 var connectionString = builder.Configuration.GetConnectionString("IdentityConnection");
 
-// =====================================
+// =====================================: 'Exception has been thrown 
 // DB CONTEXT + IDENTITY
 // =====================================
 builder.Services.AddDbContext<DB_ContextIdentity>(options =>
@@ -118,9 +128,12 @@ builder.Services.AddScoped<ActiveDirectoryService>();
 
 var app = builder.Build();
 
+
 // =====================================
 // MIDDLEWARE
 // =====================================
+app.UseGlobalErrorHandler();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();

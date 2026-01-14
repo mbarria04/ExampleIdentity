@@ -1,0 +1,1 @@
+12:21:39 [ERR] (PracticaIdentity.Controllers.ClientesController) cid= tid=6b60b57275146c71f9bb2ebfe0b3e29f AgregarClienteAsync devolvió false. Payload: {"Id":0,"Nombre":"avbelccccccccccccccccccccccccccccccc","Apellido":"vvvvvvvvvvvvvvvvvvv","Email":"bmoises04@gmail.com","Telefono":"5555555555","FechaRegistro":"2026-01-13T00:00:00.0000000","$type":"ClienteDto"}
