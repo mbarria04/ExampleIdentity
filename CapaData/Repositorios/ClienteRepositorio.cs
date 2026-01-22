@@ -98,6 +98,39 @@ namespace CapaData.Repositorios
             );
         }
 
+
+
+        public async Task<DataTableResponse<TblProducto>> ListarProductosPaginadoAsync(DataTableRequest request)
+        {
+            using var connection = new SqlConnection(_context.Database.GetDbConnection().ConnectionString);
+
+            var parametros = new DynamicParameters();
+            parametros.Add("@Start", request.Start);
+            parametros.Add("@Length", request.Length);
+            parametros.Add("@Search", request.Search?.Value);
+
+            using var multi = await connection.QueryMultipleAsync(
+                "sp_ListarProductosPaginado",
+                parametros,
+                commandType: CommandType.StoredProcedure
+            );
+
+            // Orden exacto como lo devuelve el SP
+            int total = await multi.ReadFirstAsync<int>();
+            int filtered = await multi.ReadFirstAsync<int>();
+            var data = await multi.ReadAsync<TblProducto>();
+
+            return new DataTableResponse<TblProducto>
+            {
+                Draw = request.Draw,
+                RecordsTotal = total,
+                RecordsFiltered = filtered,
+                Data = data
+            };
+        }
+
+
+
         //public async Task<bool> InsertarClienteAsync(ClienteDto clienteDto)
         //{
         //    // Mapear DTO a entidad

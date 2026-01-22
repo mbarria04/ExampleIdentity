@@ -12,5 +12,11 @@ namespace CapaAplicacion.Interfaces
         Task<bool> AgregarClienteAsync(ClienteDto cliente);
         Task<ClienteDto> ObtenerClientePorIdAsync(int id);
         Task<bool> ActualizarClienteAsync(ClienteDto cliente);
+
+
+      
+        Task<DataTableResponse<TblProducto>> ListarProductosPaginadoAsync(DataTableRequest request);
+        
+
     }
 }

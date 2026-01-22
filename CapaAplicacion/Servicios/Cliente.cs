@@ -40,5 +40,12 @@ namespace CapaAplicacion.Servicios
             return await _cLienteRepositorio.ObtenerClientePorIdAsync(id);
         }
 
+
+        public async Task<DataTableResponse<TblProducto>> ListarProductosPaginadoAsync(DataTableRequest request)
+        {
+            return await _cLienteRepositorio.ListarProductosPaginadoAsync(request);
+        }
+
+
     }
 }

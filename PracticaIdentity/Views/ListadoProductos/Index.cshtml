@@ -1,0 +1,56 @@
+﻿@{
+    ViewBag.Title = "Productos";
+}
+
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Listado Productos</h5>
+        <input type="text" id="txtCedula" class="form-control w-25" placeholder="Ingrese cédula" />
+     
+
+      
+    </div>
+    <div class="card-body">
+        <table id="tablaProductos"
+               class="display nowrap stripe hover"
+               style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>SKU</th>
+                    <th>Nombre</th>
+                    <th>Precio Base</th>
+                    <th>Precio Actual</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+
+        $('#tablaProductos').DataTable({
+            processing: true,
+            serverSide: true,
+            responsive: true,
+            ajax: {
+                url: '@Url.Action("ListarProductos", "ListadoProductos")',
+                type: "POST"
+            },
+            columns: [
+                { data: 'id' },
+                { data: 'sku' },
+                { data: 'name' },
+                { data: 'basePrice', render: $.fn.dataTable.render.number(',', '.', 2, '$') },
+                { data: 'currentPrice', render: $.fn.dataTable.render.number(',', '.', 2, '$') }
+            ],
+            language: {
+                url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+            }
+        });
+
+    });
+</script>
