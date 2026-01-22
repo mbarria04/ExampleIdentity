@@ -1,0 +1,43 @@
+
+ALTER PROCEDURE sp_ListarProductosPaginado
+    @Start INT,
+    @Length INT,
+    @Search NVARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ------------------------------------
+    -- 1) TOTAL DE REGISTROS
+    ------------------------------------
+    SELECT COUNT(*) 
+    FROM Products;
+
+    ------------------------------------
+    -- 2) TOTAL FILTRADO
+    ------------------------------------
+    SELECT COUNT(*)
+    FROM Products
+    WHERE
+        @Search IS NULL OR @Search = ''
+        OR (Sku LIKE '%' + @Search + '%'
+        OR Name LIKE '%' + @Search + '%');
+
+    ------------------------------------
+    -- 3) DATOS PAGINADOS (MODERNO)
+    ------------------------------------
+    SELECT 
+        Id,
+        Sku,
+        Name,
+        BasePrice,
+        CurrentPrice
+    FROM Products
+    WHERE
+        @Search IS NULL OR @Search = ''
+        OR (Sku LIKE '%' + @Search + '%'
+        OR Name LIKE '%' + @Search + '%')
+    ORDER BY Id
+    OFFSET @Start ROWS
+    FETCH NEXT @Length ROWS ONLY;
+END
