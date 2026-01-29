@@ -5,8 +5,8 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">Clientes</h5>
-        <input type="text" id="txtCedula" class="form-control w-25" placeholder="Ingrese cédula" />
-        <button id="btnConsultar" class="btn btn-primary">Consultar</button>
+      @*   <input type="text" id="txtCedula" class="form-control w-25" placeholder="Ingrese cédula" />
+        <button id="btnConsultar" class="btn btn-primary">Consultar</button> *@
 
         <button class="btn btn-success mb-3" data-toggle="modal" data-target="#modalAgregarCliente">
             Agregar Cliente
@@ -241,10 +241,15 @@
                         $("#IdCliente").val("");
                         $("#modalAgregarClienteLabel").text("Agregar Cliente");
                         table.ajax.reload(null, false);
-                        alert("Cliente guardado correctamente");
+                        if (esEditar) {
+                              showAlert("Cliente actualizado correctamente ✅", "success");
+                         } else {
+                             showAlert("Cliente agregado correctamente ✅", "success");
+                          }
                     },
                     error: function (xhr) {
-                        alert("Error: " + xhr.status + " - " + xhr.responseText);
+                        // alert("Error: " + xhr.status + " - " + xhr.responseText);
+                        showAlert("Error al guardar el cliente ❌", "error");
                     }
                 });
             }

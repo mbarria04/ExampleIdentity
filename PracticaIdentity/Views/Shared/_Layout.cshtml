@@ -48,8 +48,59 @@
 	<script src="~/vendors/jquery/dist/jquery.min.js"></script>
 	<script src="~/vendors/jquery/dist/jquery.validate.min.js"></script>
 	<script src="~/vendors/Toastr/toastr.min.js"></script>
+	<style>
+		.app-alert {
+			position: fixed;
+			top: 20px;
+			right: 15px;
+			min-width: 250px;
+			max-width: 400px;
+			padding: 12px 18px;
+			border-radius: 8px;
+			font-size: 14px;
+			font-weight: 500;
+			color: #fff;
+			z-index: 9999;
+			box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+			animation: fadeInSlide 0.3s ease;
+		}
+
+			.app-alert.success {
+				background: #198754;
+			}
+			/* verde */
+			.app-alert.error {
+				background: #dc3545;
+			}
+			/* rojo */
+			.app-alert.warning {
+				background: #ffc107;
+				color: #000;
+			}
+			/* amarillo */
+			.app-alert.info {
+				background: #0d6efd;
+			}
+		/* azul */
+
+		@@keyframes fadeInSlide {
+			from
+
+		{
+			opacity: 0;
+			transform: translateY(-10px);
+		}
+
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+
+		}
+	</style>
 </head>
 <body class="nav-md">
+	<div id="appAlert" class="app-alert d-none"></div>
 	@{
 		string fullName = null;
 
@@ -335,6 +386,22 @@
 	</style>
 
 	<script>
+
+
+		function showAlert(message, type = "info", duration = 2000) {
+			var alertBox = $("#appAlert");
+
+			alertBox.removeClass("d-none success error warning info")
+				.addClass(type)
+				.text(message);
+
+			setTimeout(function () {
+				alertBox.addClass("d-none");
+			}, duration);
+		}
+
+
+
 		(function () {
 			const launcher = document.getElementById('chatLauncher');
 			const panel    = document.getElementById('chatPanel');
@@ -366,6 +433,7 @@
 					closeChat();
 				}
 			});
+
 		})();
 	</script>
 

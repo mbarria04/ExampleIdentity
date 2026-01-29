@@ -74,10 +74,14 @@
 
             var nombre = $("#txtnombre").val().trim();
 
-            if (nombre === "") {
-                toastr.warning("Debe ingresar un nombre");
-                return;
-            }
+            // if (nombre === "") {
+            //     toastr.warning("Debe ingresar un nombre");
+            //     return;
+            // }
+          if (nombre === "") {
+            showAlert("Debe ingresar un nombre", "warning");
+            return;
+        }
 
             $.ajax({
                 url: "/Clientes/Consultar",
