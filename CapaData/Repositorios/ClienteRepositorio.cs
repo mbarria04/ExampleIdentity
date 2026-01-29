@@ -1,12 +1,13 @@
 ﻿
 using CapaData.Data;
 using CapaData.DTOs;
+using CapaData.Entities;
 using CapaData.Interfaces;
+using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using System.Data;
-using Dapper;
 using Microsoft.Extensions.Logging;
+using System.Data;
 
 namespace CapaData.Repositorios
 {
@@ -66,7 +67,7 @@ namespace CapaData.Repositorios
         }
 
 
-        public async Task<bool> ActualizarClienteAsync(ClienteDto cliente)
+        public async Task<bool> ActualizarClienteAsync(ClienteData cliente)
         {
             using var connection = new SqlConnection(_context.Database.GetDbConnection().ConnectionString);
 
@@ -84,14 +85,14 @@ namespace CapaData.Repositorios
             return parametros.Get<bool>("@Resultado");
         }
 
-        public async Task<ClienteDto> ObtenerClientePorIdAsync(int id)
+        public async Task<ClienteData> ObtenerClientePorIdAsync(int id)
         {
             using var connection = new SqlConnection(_context.Database.GetDbConnection().ConnectionString);
 
             var parametros = new DynamicParameters();
             parametros.Add("@Id", id);
 
-            return await connection.QueryFirstOrDefaultAsync<ClienteDto>(
+            return await connection.QueryFirstOrDefaultAsync<ClienteData>(
                 "sp_ObtenerClientePorId",
                 parametros,
                 commandType: CommandType.StoredProcedure
@@ -100,7 +101,7 @@ namespace CapaData.Repositorios
 
 
 
-        public async Task<DataTableResponse<TblProducto>> ListarProductosPaginadoAsync(DataTableRequest request)
+        public async Task<DataTableResponseData<Product>> ListarProductosPaginadoAsync(DataTableRequestData request)
         {
             using var connection = new SqlConnection(_context.Database.GetDbConnection().ConnectionString);
 
@@ -118,14 +119,14 @@ namespace CapaData.Repositorios
             // Orden exacto como lo devuelve el SP
             int total = await multi.ReadFirstAsync<int>();
             int filtered = await multi.ReadFirstAsync<int>();
-            var data = await multi.ReadAsync<TblProducto>();
+            var data = await multi.ReadAsync<Product>();
 
-            return new DataTableResponse<TblProducto>
+            return new DataTableResponseData<Product>
             {
                 Draw = request.Draw,
                 RecordsTotal = total,
                 RecordsFiltered = filtered,
-                Data = data
+                Data = data.ToList()
             };
         }
 

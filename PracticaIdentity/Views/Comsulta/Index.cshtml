@@ -9,19 +9,25 @@
           
             <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Tabla Menus</h5>
-                    <button id="btnConsultar" class="btn btn-primary">Consultar</button>
+                <div class="d-flex gap-2">
+                    <input type="text" id="txtnombre" class="form-control form-control-sm" placeholder="Ingrese Nombre">
+                    <button id="btnConsultar" class="btn btn-primary btn-sm">Consultar</button>
+                </div>
+              
 
 
             </div>
             <div id="card-body-titular" class="card-body collapse show">
-                <table id="tablaMenus" class="display">
+                <table id="tablaClientes" class="display" style="width:100%">
                     <thead>
                         <tr>
                             <th>Id</th>
-                            <th>Descripción</th>
-                            <th>Id Padre</th>
-                            <th>Attach</th>
-                            <th>Roles Users</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Email</th>
+                            <th>Telefono</th>
+                            <th>Fecha Registro</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -40,52 +46,53 @@
 
     <script>
         $(document).ready(function () {
-            $('#tablaMenus').DataTable({
-                columns: [
-                    { data: 'id' },
-                    { data: 'descripcionMenu' },
-                    { data: 'idPadre' },
-                    { data: 'attach' },
-                    { data: 'rolesUsers' }
-                    ],
-                initComplete: function () {
-                    // Aplica estilo pequeño al combo y al buscador
-                    $('.dataTables_length select').addClass('form-control form-control-sm');
-                    $('.dataTables_filter input').addClass('form-control form-control-sm');
-                  }
 
-            });
 
-            $("#btnConsultar").click(function () {
-                // 1. Pedir token a App1
-                       $.ajax({
-            url: "https://localhost:7183/api/JWT/generate", // 🔑 URL completa del API que genera el JWT
-            type: "GET",
-            success: function (response) {
-                var token = response.token;
-
-                // 2. Usar token para llamar a App2
-                $.ajax({
-                    url: "https://localhost:7096/api/reportes/menus",
-                    type: "GET",
-                    headers: {
-                        "Authorization": "Bearer " + token
-                    },
-                    success: function (data) {
-                        var table = $('#tablaMenus').DataTable();
-                        table.clear().rows.add(data).draw();
-                    },
-                    error: function (xhr) {
-                        alert("Error: " + xhr.status + " - " + xhr.responseText);
+          var table = $('#tablaClientes').DataTable({
+            columns: [
+                { data: 'id' },
+                { data: 'nombre' },
+                { data: 'apellido' },
+                { data: 'email' },
+                { data: 'telefono' },
+                {
+                    data: 'fechaRegistro',
+                    render: function (data) {
+                        return data ? new Date(data).toLocaleDateString() : '';
                     }
-                });
-            },
-            error: function () {
-                alert("No se pudo generar el token");
-            }
+                },
+                {
+                    data: null,
+                    render: function (data) {
+                        return `<button class="btn btn-sm btn-info">Ver</button>`;
+                    }
+                }
+            ]
         });
 
+         $("#btnConsultar").click(function () {
+
+            var nombre = $("#txtnombre").val().trim();
+
+            if (nombre === "") {
+                toastr.warning("Debe ingresar un nombre");
+                return;
+            }
+
+            $.ajax({
+                url: "/Clientes/Consultar",
+                type: "GET",
+                data: { NOMBRE: nombre }, // ✅ debe coincidir con el parámetro del método
+                success: function (data) {
+                    console.log("Datos recibidos:", data); // 👈 útil para depurar
+                    table.clear().rows.add(data).draw();
+                },
+                error: function (xhr) {
+                    toastr.error("Error: " + xhr.status);
+                    console.log(xhr.responseText);
+                }
             });
+          });
         });
     </script>
 }

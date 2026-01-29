@@ -1,5 +1,5 @@
 ﻿using CapaAplicacion;
-using CapaData.DTOs;
+using CapaAplicacion.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace PracticaIdentity.Controllers
@@ -21,7 +21,7 @@ namespace PracticaIdentity.Controllers
 
 
         [HttpPost]
-        public async Task<IActionResult> ListarProductos(DataTableRequest request)
+        public async Task<IActionResult> ListarProductos(DataTableRequestDto request)
         {
             var result = await _dependencias._Cliente.ListarProductosPaginadoAsync(request);
             return Json(result); // DataTables lo entiende automáticamente

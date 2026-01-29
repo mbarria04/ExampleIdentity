@@ -1,4 +1,5 @@
 ﻿using CapaData.DTOs;
+using CapaAplicacion.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,12 +11,12 @@ namespace CapaAplicacion.Interfaces
     public interface ICliente
     {
         Task<bool> AgregarClienteAsync(ClienteDto cliente);
-        Task<ClienteDto> ObtenerClientePorIdAsync(int id);
-        Task<bool> ActualizarClienteAsync(ClienteDto cliente);
+        Task<ClienteDTOs> ObtenerClientePorIdAsync(int id);
+        Task<bool> ActualizarClienteAsync(ClienteDTOs cliente);
 
 
       
-        Task<DataTableResponse<TblProducto>> ListarProductosPaginadoAsync(DataTableRequest request);
+        Task<DataTableResponseDto<ProductoDTOs>> ListarProductosPaginadoAsync(DataTableRequestDto request);
         
 
     }

@@ -1,4 +1,5 @@
-﻿using CapaData.DTOs;
+﻿using CapaData.Entities;
+using CapaData.DTOs; // muy mal , solo es entities se debe corregir
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,10 +11,10 @@ namespace CapaData.Interfaces
     public interface ICLienteRepositorio
     {
         Task<bool> InsertarClienteAsync(ClienteDto cliente);
-        Task<ClienteDto> ObtenerClientePorIdAsync(int id);
-        Task<bool> ActualizarClienteAsync(ClienteDto cliente); // ⬅️ AGREGADO
+        Task<ClienteData> ObtenerClientePorIdAsync(int id);
+        Task<bool> ActualizarClienteAsync(ClienteData cliente); // ⬅️ AGREGADO
 
 
-        Task<DataTableResponse<TblProducto>> ListarProductosPaginadoAsync(DataTableRequest request);
+        Task<DataTableResponseData<Product>> ListarProductosPaginadoAsync(DataTableRequestData request);
     }
 }

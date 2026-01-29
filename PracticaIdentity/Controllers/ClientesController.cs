@@ -1,5 +1,6 @@
 ﻿
 using CapaAplicacion;
+using CapaAplicacion.DTOs;
 using CapaData.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
@@ -158,7 +159,7 @@ namespace PracticaIdentity.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> Consultar(string cedula)
+        public async Task<IActionResult> Consultar(string NOMBRE)
         {
             try
             {
@@ -167,10 +168,22 @@ namespace PracticaIdentity.Controllers
                 var baseUrl = _config["ApiClientes:BaseUrl"]!;
                 var clientesEP = _config["ApiClientes:ClientesEndpoint"]!;
 
-                // 👉 api/clientes/ConsultarCliente?cedula=...
-                var url = CombineUrl(baseUrl, $"{clientesEP}/ConsultarCliente?cedula={cedula}");
+                var url = CombineUrl(baseUrl, $"{clientesEP}/ConsultarCliente?NOMBRE={NOMBRE}");
 
-                var clientes = await client.GetFromJsonAsync<List<ClienteDto>>(url);
+                var response = await client.GetAsync(url);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorApi = await response.Content.ReadAsStringAsync();
+
+                    return StatusCode((int)response.StatusCode, new
+                    {
+                        mensaje = "Error en la API de clientes",
+                        detalle = errorApi
+                    });
+                }
+
+                var clientes = await response.Content.ReadFromJsonAsync<List<ClienteDto>>();
 
                 return Json(clientes ?? new List<ClienteDto>());
             }
@@ -201,7 +214,7 @@ namespace PracticaIdentity.Controllers
 
         // 🔹 Editar (lógica local, no llama API interna)
         [HttpPut]
-        public async Task<IActionResult> Editar([FromBody] ClienteDto cliente)
+        public async Task<IActionResult> Editar([FromBody] ClienteDTOs cliente)
         {
             var existe = await _dependencias._Cliente.ObtenerClientePorIdAsync(cliente.Id);
 
@@ -229,7 +242,7 @@ namespace PracticaIdentity.Controllers
 
 
         [HttpPost]
-        public IActionResult ValidarCampos([FromBody] ClienteDto cliente)
+        public IActionResult ValidarCampos([FromBody] ClienteDTOs cliente)
         {
             TryValidateModel(cliente);
 
